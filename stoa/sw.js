@@ -1,6 +1,6 @@
 /* Stoa Nocturna — Service Worker (cache-first, offline).
    Al cambiar la app, sube la versión: stoa-v1 -> stoa-v2 ... */
-const CACHE = 'stoa-v4';
+const CACHE = 'stoa-v5';
 
 const ASSETS = [
   './',
