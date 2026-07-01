@@ -1,10 +1,2192 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Tiroide</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#14b8a6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Eutirox">
+<meta name="description" content="Seguimiento clínico de Eutirox para tiroiditis de Hashimoto">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-96.png">
+<title>Eutirox Manager — Yoselyn Galleguillos</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1620;--surface:#152030;--surface2:#1c2d40;--surface3:#243548;
+  --border:#2a3d55;--border2:#344d68;
+  --teal:#14b8a6;--teal2:#0d9488;--teal-glow:rgba(20,184,166,.15);
+  --blue:#3b82f6;--blue-glow:rgba(59,130,246,.15);
+  --green:#22c55e;--green-bg:rgba(34,197,94,.1);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.1);
+  --yellow:#f59e0b;--yellow-bg:rgba(245,158,11,.1);
+  --orange:#f97316;--orange-bg:rgba(249,115,22,.1);
+  --purple:#a855f7;--purple-bg:rgba(168,85,247,.1);
+  --text:#e2eaf4;--text2:#8fa3bc;--text3:#5a7390;
+  --fw:var(--surface);
+  --r:10px;--r2:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;display:flex;height:100vh;overflow:hidden}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;z-index:10}
+.sb-logo{padding:22px 18px 18px;border-bottom:1px solid var(--border)}
+.sb-logo h1{font-size:15px;font-weight:700;color:var(--teal);letter-spacing:-.01em}
+.sb-logo p{font-size:11px;color:var(--text3);margin-top:3px}
+.sb-patient{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.sb-patient .name{font-size:12px;font-weight:600;color:var(--text)}
+.sb-patient .info{font-size:11px;color:var(--text3);margin-top:2px}
+.sb-nav{padding:10px 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-radius:0;font-size:13px;font-weight:500;color:var(--text2);transition:all .15s;border-left:3px solid transparent;margin:1px 0;position:relative}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--teal-glow);color:var(--teal);border-left-color:var(--teal)}
+.nav-item .ico{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sb-footer{padding:14px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);line-height:1.5}
+
+/* ─── MAIN ─── */
+.main{flex:1;overflow-y:auto;background:var(--bg)}
+.page{display:none;padding:28px 30px;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-header{margin-bottom:24px}
+.page-header h2{font-size:22px;font-weight:700;color:var(--text)}
+.page-header p{font-size:13px;color:var(--text2);margin-top:4px}
+
+/* ─── GRID LAYOUTS ─── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+
+/* ─── CARDS ─── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px}
+.card-sm{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.card h3{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h3 .ico{font-size:15px}
+
+/* ─── KPI CARDS ─── */
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px;position:relative;overflow:hidden;transition:transform .15s}
+.kpi:hover{transform:translateY(-1px)}
+.kpi::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:0 var(--r2) 0 60px;opacity:.12}
+.kpi.ok::before{background:var(--green)}
+.kpi.warn::before{background:var(--yellow)}
+.kpi.bad::before{background:var(--red)}
+.kpi.info::before{background:var(--teal)}
+.kpi .label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.kpi .value{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:600;line-height:1}
+.kpi .value.ok{color:var(--green)}.kpi .value.warn{color:var(--yellow)}.kpi .value.bad{color:var(--red)}.kpi .value.info{color:var(--teal)}
+.kpi .unit{font-size:12px;color:var(--text3);margin-top:4px}
+.kpi .ref{font-size:11px;color:var(--text3);margin-top:2px}
+.kpi .trend{font-size:11px;margin-top:6px;display:flex;align-items:center;gap:4px}
+.trend-up{color:var(--red)}.trend-down{color:var(--green)}.trend-ok{color:var(--green)}
+
+/* ─── SECTION LABELS ─── */
+.sec{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.sec::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ─── DOSE HERO ─── */
+.dose-hero{background:linear-gradient(135deg,var(--surface2) 0%,rgba(20,184,166,.08) 100%);border:1px solid rgba(20,184,166,.3);border-radius:var(--r2);padding:28px;text-align:center;position:relative;overflow:hidden}
+.dose-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:150px;height:150px;background:radial-gradient(circle,rgba(20,184,166,.1),transparent 70%);border-radius:50%}
+.dose-hero .direction-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:16px}
+.badge-down{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.badge-up{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.badge-keep{background:rgba(20,184,166,.15);color:var(--teal);border:1px solid rgba(20,184,166,.3)}
+.dose-hero .daily-label{font-size:12px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.dose-hero .daily-value{font-family:'JetBrains Mono',monospace;font-size:72px;font-weight:700;color:var(--teal);line-height:1;text-shadow:0 0 40px rgba(20,184,166,.3)}
+.dose-hero .daily-unit{font-size:18px;color:var(--text2);margin-top:4px}
+.dose-freq{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.freq-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center}
+.freq-card .fl{font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.07em}
+.freq-card .fv{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;color:var(--text)}
+.freq-card .fu{font-size:11px;color:var(--text3)}
+
+/* ─── CLINICAL ALERT ─── */
+.clin-alert{border-radius:var(--r);padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;font-size:13px}
+.clin-alert.bad{background:var(--red-bg);border:1px solid rgba(239,68,68,.35);border-left:4px solid var(--red)}
+.clin-alert.warn{background:var(--yellow-bg);border:1px solid rgba(245,158,11,.35);border-left:4px solid var(--yellow)}
+.clin-alert.ok{background:var(--green-bg);border:1px solid rgba(34,197,94,.35);border-left:4px solid var(--green)}
+.clin-alert.info{background:var(--teal-glow);border:1px solid rgba(20,184,166,.35);border-left:4px solid var(--teal)}
+.clin-alert .ai{font-size:20px;flex-shrink:0;margin-top:1px}
+.clin-alert h4{font-size:13px;font-weight:600;margin-bottom:3px}
+.clin-alert h4.bad{color:var(--red)}.clin-alert h4.warn{color:var(--yellow)}.clin-alert h4.ok{color:var(--green)}.clin-alert h4.info{color:var(--teal)}
+.clin-alert p{color:var(--text2);line-height:1.5}
+
+/* ─── INPUTS / FORMS ─── */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px}
+.field input,.field select{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s;width:100%}
+.field input:focus,.field select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(20,184,166,.15)}
+.field input.required{border-color:var(--yellow);background:rgba(245,158,11,.04)}
+.field input.required:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,158,11,.12)}
+.field .hint{font-size:11px;color:var(--text3);line-height:1.4}
+.tag{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
+.tag-req{background:rgba(245,158,11,.2);color:var(--yellow)}
+.tag-auto{background:rgba(34,197,94,.15);color:var(--green)}
+.tag-opt{background:rgba(90,115,144,.15);color:var(--text3)}
+
+/* ─── BUTTONS ─── */
+.btn{padding:10px 20px;border:none;border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,#0d9488,#14b8a6);color:#fff;box-shadow:0 4px 14px rgba(20,184,166,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(20,184,166,.4)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--surface3);border-color:var(--border2)}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-full{width:100%;justify-content:center;padding:14px}
+.btn-sm{padding:7px 14px;font-size:12px}
+
+/* ─── LAB ROWS ─── */
+.lab-table{width:100%;border-collapse:collapse}
+.lab-table th{background:var(--surface2);color:var(--text3);font-size:11px;font-weight:600;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);letter-spacing:.05em;text-transform:uppercase}
+.lab-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2)}
+.lab-table tr:last-child td{border-bottom:none}
+.lab-table tr:hover td{background:rgba(255,255,255,.02)}
+.val-ok{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--green);background:var(--green-bg);padding:3px 10px;border-radius:5px;font-size:12px}
+.val-warn{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--yellow);background:var(--yellow-bg);padding:3px 10px;border-radius:5px;font-size:12px}
+.val-bad{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--red);background:var(--red-bg);padding:3px 10px;border-radius:5px;font-size:12px}
+.val-info{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--teal);background:var(--teal-glow);padding:3px 10px;border-radius:5px;font-size:12px}
+
+/* ─── CHARTS ─── */
+.chart-wrap{position:relative;height:180px}
+
+/* ─── SUPPLEMENT CARDS ─── */
+.supp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:16px}
+.supp-header{padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.supp-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.supp-name{font-size:15px;font-weight:700;color:var(--text)}
+.supp-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.supp-body{padding:16px 20px}
+.supp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.supp-item{background:var(--surface2);border-radius:8px;padding:10px 12px}
+.supp-item .si-label{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.supp-item .si-val{font-size:13px;color:var(--text);font-weight:500}
+.supp-combos{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.combo-ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:var(--green);font-size:11px;padding:3px 10px;border-radius:20px}
+.combo-no{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--red);font-size:11px;padding:3px 10px;border-radius:20px}
+
+/* ─── TIMELINE ─── */
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);position:relative}
+.tl-item:last-child{border-bottom:none}
+.tl-time{width:90px;flex-shrink:0;text-align:right}
+.tl-time .th{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--teal)}
+.tl-time .ts{font-size:11px;color:var(--text3)}
+.tl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:4px;border:2px solid var(--bg);position:relative;z-index:1}
+.tl-dot::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100%;height:100%;border-radius:50%;animation:pulseDot 2s infinite}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(20,184,166,.4)}50%{box-shadow:0 0 0 6px rgba(20,184,166,0)}}
+.tl-content{flex:1}
+.tl-content .tc-title{font-size:14px;font-weight:600;color:var(--text)}
+.tl-content .tc-desc{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5}
+.tl-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tl-tag{font-size:11px;padding:2px 8px;border-radius:5px;background:var(--surface2);color:var(--text3)}
+
+/* ─── EXERCISE ─── */
+.ex-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px}
+.ex-day{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center}
+.ex-day .day-name{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.ex-day .day-ico{font-size:20px;margin-bottom:4px}
+.ex-day .day-type{font-size:10px;color:var(--text2);line-height:1.3}
+.ex-day.active{border-color:var(--teal);background:var(--teal-glow)}
+.ex-day.rest{opacity:.5}
+.ex-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.ex-block h4{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.ex-list{list-style:none}
+.ex-list li{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2)}
+.ex-list li:last-child{border-bottom:none}
+.ex-list li::before{content:'→';color:var(--teal);flex-shrink:0}
+
+/* ─── FILE UPLOAD ─── */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--r2);padding:40px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--teal);background:var(--teal-glow)}
+.upload-zone .uz-ico{font-size:40px;margin-bottom:12px}
+.upload-zone h3{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.upload-zone p{font-size:13px;color:var(--text3)}
+#file-input{display:none}
+
+/* ─── HISTORY TABLE ─── */
+.hist-row{cursor:pointer}
+.hist-row:hover td{background:rgba(20,184,166,.04)!important}
+
+/* ─── PURCHASE LIST ─── */
+.purchase-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.purchase-item:last-child{border-bottom:none}
+.pi-check{width:22px;height:22px;border:2px solid var(--border2);border-radius:5px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.pi-check:hover{border-color:var(--teal)}
+.pi-check.checked{background:var(--teal);border-color:var(--teal);color:#fff;font-size:12px}
+.pi-info{flex:1}
+.pi-name{font-size:13px;font-weight:600;color:var(--text)}
+.pi-detail{font-size:12px;color:var(--text2);margin-top:2px}
+.pi-when{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--surface2);color:var(--text3)}
+
+/* ─── FOOD SECTION ─── */
+.food-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.food-list{list-style:none}
+.food-list li{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.4}
+.food-list li:last-child{border-bottom:none}
+.food-list li .fi{flex-shrink:0;margin-top:1px}
+
+/* ─── DISCLAIMER ─── */
+.disclaimer{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:var(--r);padding:14px 18px;font-size:12px;color:var(--text3);line-height:1.6;margin-top:24px}
+.disclaimer strong{color:var(--yellow)}
+
+/* ─── MODAL ─── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:28px;max-width:560px;width:90%;max-height:85vh;overflow-y:auto;animation:fadeIn .2s ease}
+.modal h3{font-size:18px;font-weight:700;margin-bottom:16px;color:var(--text)}
+.modal-close{float:right;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0;line-height:1}
+.modal-close:hover{color:var(--text)}
+
+/* ─── TOAST ─── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:12px 18px;font-size:13px;color:var(--text);box-shadow:var(--shadow);animation:toastIn .3s ease;display:flex;align-items:center;gap:10px;max-width:320px}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.toast.success{border-left:3px solid var(--green)}.toast.error{border-left:3px solid var(--red)}.toast.info{border-left:3px solid var(--teal)}
+
+/* ─── FORMULA BOX ─── */
+.formula{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--teal);line-height:1.9;margin:12px 0}
+.formula .fc{color:var(--text3)}.formula .fv{color:var(--yellow)}.formula .fr{color:var(--green);font-weight:600}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px){
+  body{flex-direction:column}
+  .sidebar{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .sb-nav{display:flex;overflow-x:auto;padding:6px 8px}
+  .nav-item{flex-direction:column;gap:4px;padding:8px 12px;font-size:10px;text-align:center;border-left:none;border-bottom:3px solid transparent;min-width:70px}
+  .nav-item.active{border-bottom-color:var(--teal);border-left-color:transparent}
+  .nav-item .ico{font-size:18px;width:auto}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .main{height:calc(100vh - 180px);overflow-y:auto}
+  .supp-grid{grid-template-columns:1fr}
+  .dose-hero .daily-value{font-size:52px}
+}
+</style>
 </head>
 <body>
-  <h1>App Tiroide</h1>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <h1>💊 Eutirox Manager</h1>
+    <p>Hashimoto · Seguimiento clínico</p>
+  </div>
+  <div class="sb-patient">
+    <div class="name">Yoselyn Galleguillos T.</div>
+    <div class="info">F.Nac: 28/12/1987 · Femenino<br>Dx: Tiroiditis de Hashimoto</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="ico">🏠</span>Dashboard</div>
+    <div class="nav-item" onclick="showPage('calc')"><span class="ico">💊</span>Calculadora</div>
+    <div class="nav-item" onclick="showPage('history')"><span class="ico">📈</span>Historial</div>
+    <div class="nav-item" onclick="showPage('upload')"><span class="ico">📁</span>Cargar Exámenes</div>
+    <div class="nav-item" onclick="showPage('supplements')"><span class="ico">🧪</span>Suplementos</div>
+    <div class="nav-item" onclick="showPage('nutrition')"><span class="ico">🥗</span>Alimentación</div>
+    <div class="nav-item" onclick="showPage('schedule')"><span class="ico">⏰</span>Horarios</div>
+    <div class="nav-item" onclick="showPage('exercise')"><span class="ico">🏃</span>Ejercicios</div>
+    <div class="nav-item" onclick="showPage('pdf')"><span class="ico">📄</span>Exportar PDF</div>
+    <div class="nav-item" onclick="showPage('data')"><span class="ico">💾</span>Mis Datos</div>
+  <div id="install-btn" class="nav-item" onclick="installPWA()" style="display:none;color:var(--teal);border-top:1px solid var(--border);margin-top:4px">
+    <span class="ico">📲</span>Instalar app
+  </div>
+  </nav>
+  <div class="sb-footer">
+    ⚕️ Solo apoyo clínico.<br>No reemplaza evaluación médica.
+  </div>
+</aside>
+
+<!-- ═══════════ MAIN CONTENT ═══════════ -->
+<main class="main">
+
+<!-- ━━━━━ DASHBOARD ━━━━━ -->
+<div id="page-dashboard" class="page active">
+  <div class="page-header">
+    <h2>🏠 Dashboard</h2>
+    <p>Resumen clínico actual · Examen más reciente: <strong id="dash-date">—</strong></p>
+  </div>
+
+  <div id="dash-alert-box" class="mb20"></div>
+
+  <div class="sec mb16">Hormona Tiroidea — Parámetros Clave</div>
+  <div class="g4 mb20" id="dash-kpis-thyroid"></div>
+
+  <div class="sec mb16">Metabolismo & Inflamación</div>
+  <div class="g4 mb20" id="dash-kpis-meta"></div>
+
+  <div class="sec mb16">Dosis Actual de Eutirox</div>
+  <div class="g2 mb24">
+    <div id="dash-dose-hero">
+      <div class="dose-hero">
+        <p style="color:var(--text3);font-size:13px">Ingresa tus datos en la sección <strong style="color:var(--teal)">Calculadora</strong> para ver la dosis sugerida aquí.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">📊</span> Evolución TSH</h3>
+      <div class="chart-wrap"><canvas id="dash-tsh-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="g2 mb20">
+    <div class="card">
+      <h3><span class="ico">🛡️</span> Anticuerpos Anti-TPO</h3>
+      <div class="chart-wrap"><canvas id="dash-antitpo-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">🩸</span> Perfil Lipídico</h3>
+      <div class="chart-wrap"><canvas id="dash-lipid-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>⚕️ Aviso médico importante:</strong> Esta herramienta es de apoyo clínico basado en los datos ingresados. No reemplaza la evaluación presencial de tu endocrinólogo. Los ajustes de Eutirox deben ser <strong>graduales y supervisados médicamente</strong>. Nunca suspender el tratamiento de forma abrupta.
+  </div>
+</div>
+
+<!-- ━━━━━ CALCULADORA ━━━━━ -->
+<div id="page-calc" class="page">
+  <div class="page-header">
+    <h2>💊 Calculadora de Dosis</h2>
+    <p>Interpolación lineal con lógica clínica integrada. Los datos de TSH están pre-cargados desde tus exámenes.</p>
+  </div>
+
+  <div class="g2 mb16">
+    <div>
+      <div class="sec mb16">Punto de referencia 1 · Examen Sep 2025</div>
+      <div class="card-sm" style="border-left:3px solid var(--purple)">
+        <div class="g2">
+          <div class="field">
+            <label>TSH <span class="tag tag-auto">✓ Auto</span></label>
+            <input type="number" id="c-tsh1" value="0.106" readonly>
+            <span class="hint">Resultado real 08/09/2025</span>
+          </div>
+          <div class="field">
+            <label>FT4 <span class="tag tag-auto">✓ Auto</span></label>
+            <input type="number" id="c-ft41" value="1.92" readonly>
+            <span class="hint">ng/dL · 08/09/2025</span>
+          </div>
+          <div class="field" style="grid-column:1/-1">
+            <label>Dosis diaria que tomabas <span class="tag tag-req">⚡ Requerido</span></label>
+            <input type="number" id="c-dose1" class="required" placeholder="Ej: 100" min="0" max="300" step="12.5">
+            <span class="hint">mcg/día en esa época</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="sec mb16">Punto de referencia 2 · Examen Abr 2026</div>
+      <div class="card-sm" style="border-left:3px solid var(--teal)">
+        <div class="g2">
+          <div class="field">
+            <label>TSH <span class="tag tag-auto">✓ Auto</span></label>
+            <input type="number" id="c-tsh2" value="0.212" readonly>
+            <span class="hint">Resultado real 06/04/2026</span>
+          </div>
+          <div class="field">
+            <label>FT4 <span class="tag tag-auto">✓ Auto</span></label>
+            <input type="number" id="c-ft42" value="1.72" readonly>
+            <span class="hint">ng/dL · 06/04/2026</span>
+          </div>
+          <div class="field" style="grid-column:1/-1">
+            <label>Dosis diaria actual <span class="tag tag-req">⚡ Requerido</span></label>
+            <input type="number" id="c-dose2" class="required" placeholder="Ej: 100" min="0" max="300" step="12.5">
+            <span class="hint">mcg/día que tomas hoy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec mb16">Objetivo clínico</div>
+  <div class="card-sm mb20" style="border-left:3px solid var(--green)">
+    <div class="g3">
+      <div class="field">
+        <label>TSH objetivo <span class="tag tag-opt">Ajustable</span></label>
+        <input type="number" id="c-target" value="1.5" min="0.1" max="4.5" step="0.1">
+        <span class="hint">Rango Hashimoto: 1.0–2.5 uUI/mL</span>
+      </div>
+      <div class="field">
+        <label>Peso (kg) <span class="tag tag-opt">Opcional</span></label>
+        <input type="number" id="c-weight" placeholder="Ej: 65" min="30" max="200" step="0.5">
+        <span class="hint">Para cálculo mcg/kg/día</span>
+      </div>
+      <div class="field">
+        <label>Nombre del examen <span class="tag tag-opt">Opcional</span></label>
+        <input type="text" id="c-name" placeholder="Ej: Control abril 2026">
+        <span class="hint">Para guardar en historial</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary btn-full mb20" onclick="calculate()">⚡ Calcular dosis de Eutirox</button>
+
+  <div id="calc-result" style="display:none"></div>
+</div>
+
+<!-- ━━━━━ HISTORIAL ━━━━━ -->
+<div id="page-history" class="page">
+  <div class="page-header">
+    <h2>📈 Historial de Exámenes</h2>
+    <p>Evolución temporal de tus parámetros. Haz clic en una fila para ver el detalle completo.</p>
+  </div>
+  <div class="g2 mb20">
+    <div class="card">
+      <h3><span class="ico">📊</span> TSH en el tiempo</h3>
+      <div class="chart-wrap"><canvas id="hist-tsh"></canvas></div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">🧬</span> FT4 en el tiempo</h3>
+      <div class="chart-wrap"><canvas id="hist-ft4"></canvas></div>
+    </div>
+  </div>
+  <div class="g2 mb20">
+    <div class="card">
+      <h3><span class="ico">🛡️</span> Anti-TPO</h3>
+      <div class="chart-wrap"><canvas id="hist-antitpo"></canvas></div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">☀️</span> Vitamina D</h3>
+      <div class="chart-wrap"><canvas id="hist-vitd"></canvas></div>
+    </div>
+  </div>
+  <div class="sec mb16">Todos los exámenes registrados</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="overflow-x:auto">
+      <table class="lab-table" style="width:100%;min-width:700px">
+        <thead>
+          <tr>
+            <th>Fecha</th><th>TSH</th><th>FT4</th><th>FT3</th><th>Anti-TPO</th><th>Vit D</th><th>B12</th><th>Dosis</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="hist-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <div style="margin-top:14px;display:flex;gap:10px">
+    <button class="btn btn-secondary btn-sm" onclick="showPage('upload')">+ Agregar examen</button>
+    <button class="btn btn-danger btn-sm" onclick="clearHistory()">🗑 Limpiar historial</button>
+  </div>
+</div>
+
+<!-- ━━━━━ CARGA DE ARCHIVOS ━━━━━ -->
+<div id="page-upload" class="page">
+  <div class="page-header">
+    <h2>📁 Cargar Exámenes</h2>
+    <p>Sube un PDF o Excel con tus resultados — extraemos los valores automáticamente y puedes corregir lo que sea necesario.</p>
+  </div>
+
+  <div class="upload-zone mb20" onclick="document.getElementById('file-input').click()" id="drop-zone">
+    <div class="uz-ico">📄</div>
+    <h3>Haz clic o arrastra tu archivo aquí</h3>
+    <p>Acepta PDF de laboratorio o Excel (.pdf, .xlsx, .xls, .csv)<br>Intenta extraer: TSH, FT4, FT3, Anti-TPO, Vitamina D, B12, glucosa, insulina y más</p>
+    <input type="file" id="file-input" accept=".pdf,.xlsx,.xls,.csv" onchange="handleFile(this)">
+  </div>
+
+  <div id="parse-result" style="display:none">
+    <div class="clin-alert info mb16">
+      <div class="ai">🔍</div>
+      <div><h4 class="info">Valores detectados automáticamente</h4><p>Revisa cada campo. Si algo está incorrecto, corrígelo manualmente antes de guardar.</p></div>
+    </div>
+  </div>
+
+  <div class="sec mb16">Ingreso manual de examen</div>
+  <div class="card mb16">
+    <div class="g3">
+      <div class="field"><label>Fecha del examen</label><input type="date" id="u-date"><span class="hint">¿Cuándo fue la toma de muestra?</span></div>
+      <div class="field"><label>Dosis diaria Eutirox ese día (mcg)</label><input type="number" id="u-dose" placeholder="Ej: 100" min="0" max="300" step="12.5"><span class="hint">La que tomabas en ese período</span></div>
+      <div class="field"><label>Etiqueta / Nombre</label><input type="text" id="u-label" placeholder="Ej: Control anual"><span class="hint">Para identificarlo en el historial</span></div>
+    </div>
+  </div>
+  <div class="card mb16">
+    <h3><span class="ico">🦋</span> Tiroides</h3>
+    <div class="g3">
+      <div class="field"><label>TSH (uUI/mL)</label><input type="number" id="u-tsh" placeholder="0.212" step="0.001"></div>
+      <div class="field"><label>FT4 (ng/dL)</label><input type="number" id="u-ft4" placeholder="1.72" step="0.01"></div>
+      <div class="field"><label>FT3 (pg/mL)</label><input type="number" id="u-ft3" placeholder="3.13" step="0.01"></div>
+      <div class="field"><label>Anti-TPO (UI/mL)</label><input type="number" id="u-antitpo" placeholder="282.08" step="0.01"></div>
+      <div class="field"><label>Anti-TG (UI/mL)</label><input type="number" id="u-anttg" placeholder="2.28" step="0.01"></div>
+    </div>
+  </div>
+  <div class="card mb16">
+    <h3><span class="ico">🔬</span> Metabólico</h3>
+    <div class="g3">
+      <div class="field"><label>Glucosa (mg/dL)</label><input type="number" id="u-gluc" placeholder="92"></div>
+      <div class="field"><label>Insulina (uUI/mL)</label><input type="number" id="u-ins" placeholder="14.2" step="0.1"></div>
+      <div class="field"><label>HbA1c (%)</label><input type="number" id="u-hba1c" placeholder="4.4" step="0.1"></div>
+      <div class="field"><label>PCR Ultrasensible (mg/L)</label><input type="number" id="u-pcr" placeholder="3.11" step="0.01"></div>
+    </div>
+  </div>
+  <div class="card mb16">
+    <h3><span class="ico">💊</span> Vitaminas & Minerales</h3>
+    <div class="g3">
+      <div class="field"><label>Vitamina D (ng/mL)</label><input type="number" id="u-vitd" placeholder="19.6" step="0.1"></div>
+      <div class="field"><label>Vitamina B12 (pg/mL)</label><input type="number" id="u-b12" placeholder="956"></div>
+      <div class="field"><label>Ferritina (ng/mL)</label><input type="number" id="u-ferr" placeholder="94.4" step="0.1"></div>
+      <div class="field"><label>Folato Sérico (ng/mL)</label><input type="number" id="u-folate" placeholder="7.51" step="0.01"></div>
+    </div>
+  </div>
+  <div class="card mb20">
+    <h3><span class="ico">🫀</span> Perfil Lipídico</h3>
+    <div class="g3">
+      <div class="field"><label>Colesterol Total (mg/dL)</label><input type="number" id="u-chol" placeholder="165"></div>
+      <div class="field"><label>HDL (mg/dL)</label><input type="number" id="u-hdl" placeholder="60"></div>
+      <div class="field"><label>LDL (mg/dL)</label><input type="number" id="u-ldl" placeholder="80"></div>
+      <div class="field"><label>Triglicéridos (mg/dL)</label><input type="number" id="u-tg" placeholder="122"></div>
+    </div>
+  </div>
+  <button class="btn btn-primary btn-full" onclick="saveExam()">💾 Guardar examen en historial</button>
+</div>
+
+<!-- ━━━━━ SUPLEMENTOS ━━━━━ -->
+<div id="page-supplements" class="page">
+  <div class="page-header">
+    <h2>🧪 Guía Completa de Suplementos</h2>
+    <p>Basada en tus exámenes de abril 2026. Incluye tipo exacto, dosis, horario y combinaciones.</p>
+  </div>
+
+  <div id="supp-alerts" class="mb20"></div>
+
+  <!-- SELENIO -->
+  <div class="supp-card">
+    <div class="supp-header">
+      <div class="supp-icon" style="background:rgba(245,158,11,.15);color:var(--yellow)">🌿</div>
+      <div>
+        <div class="supp-name">Selenio</div>
+        <div class="supp-sub">Prioridad ALTA — Anti-TPO 282.08 (ref: &lt;5.61 UI/mL)</div>
+      </div>
+      <span style="margin-left:auto" class="val-bad">URGENTE</span>
+    </div>
+    <div class="supp-body">
+      <div class="supp-grid">
+        <div class="supp-item"><div class="si-label">Forma recomendada</div><div class="si-val">Selenometionina</div></div>
+        <div class="supp-item"><div class="si-label">Dosis orientativa</div><div class="si-val">200 mcg / día</div></div>
+        <div class="supp-item"><div class="si-label">Mejor horario</div><div class="si-val">Con el almuerzo</div></div>
+        <div class="supp-item"><div class="si-label">Duración mínima</div><div class="si-val">3–6 meses</div></div>
+        <div class="supp-item"><div class="si-label">Agua recomendada</div><div class="si-val">200–250 mL</div></div>
+        <div class="supp-item"><div class="si-label">Objetivo clínico</div><div class="si-val">Reducir Anti-TPO</div></div>
+      </div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px">
+        <strong style="color:var(--text)">¿Por qué selenometionina y no selenito?</strong> La selenometionina es la forma orgánica del selenio, con mejor biodisponibilidad (~90%) y menor toxicidad. El selenito inorgánico puede interferir con la absorción de vitamina C. Evidencia directa: meta-análisis Toulis et al. <em>Thyroid</em> 2010 — reduce Anti-TPO significativamente en pacientes con Hashimoto.<br><br>
+        <strong style="color:var(--text)">Señal de alerta:</strong> No superar 400 mcg/día. A largo plazo, dosis altas pueden causar selenosis. Con 200 mcg/día estás en rango seguro.
+      </p>
+      <div class="supp-combos">
+        <span class="combo-ok">✓ Tomar con Vitamina E</span>
+        <span class="combo-ok">✓ Con comida (mejora absorción)</span>
+        <span class="combo-no">✗ No con Vitamina C en dosis alta</span>
+        <span class="combo-no">✗ Separar del Eutirox ≥ 4 hrs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- VITAMINA D -->
+  <div class="supp-card">
+    <div class="supp-header">
+      <div class="supp-icon" style="background:rgba(251,191,36,.15);color:#fbbf24">☀️</div>
+      <div>
+        <div class="supp-name">Vitamina D3 (Colecalciferol)</div>
+        <div class="supp-sub">Prioridad ALTA — Nivel actual 19.6 ng/mL (óptimo: 40–60 ng/mL)</div>
+      </div>
+      <span style="margin-left:auto" class="val-bad">BAJO</span>
+    </div>
+    <div class="supp-body">
+      <div class="supp-grid">
+        <div class="supp-item"><div class="si-label">Forma recomendada</div><div class="si-val">D3 Colecalciferol</div></div>
+        <div class="supp-item"><div class="si-label">Dosis orientativa</div><div class="si-val">2000–4000 UI/día</div></div>
+        <div class="supp-item"><div class="si-label">Mejor horario</div><div class="si-val">Con el desayuno (con grasa)</div></div>
+        <div class="supp-item"><div class="si-label">Control</div><div class="si-val">A los 3 meses</div></div>
+        <div class="supp-item"><div class="si-label">Agua recomendada</div><div class="si-val">150–200 mL</div></div>
+        <div class="supp-item"><div class="si-label">Objetivo</div><div class="si-val">Llegar a 40–60 ng/mL</div></div>
+      </div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px">
+        <strong style="color:var(--text)">¿Por qué D3 y no D2?</strong> La D3 (colecalciferol) es la forma que produce el cuerpo con el sol y es significativamente más efectiva para elevar los niveles séricos. La D2 (ergocalciferol) es menos biodisponible y de menor duración.<br><br>
+        <strong style="color:var(--text)">Sinergia importante:</strong> La vitamina D necesita magnesio para activarse (conversión en hígado y riñón). Si el magnesio es bajo, la D3 no funciona bien. Tomar juntas es una combinación ideal. Agregar Vitamina K2 (MK-7, 100–200 mcg/día) si tomas dosis sobre 2000 UI — la K2 dirige el calcio a los huesos y lo aleja de las arterias.
+      </p>
+      <div class="supp-combos">
+        <span class="combo-ok">✓ Combinar con Magnesio</span>
+        <span class="combo-ok">✓ Combinar con Vitamina K2 (MK-7)</span>
+        <span class="combo-ok">✓ Tomar con comida grasa (aceite, aguacate)</span>
+        <span class="combo-no">✗ No en ayunas (es liposoluble)</span>
+        <span class="combo-no">✗ Separar del Eutirox ≥ 4 hrs (calcio en multivitamínicos)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAGNESIO -->
+  <div class="supp-card">
+    <div class="supp-header">
+      <div class="supp-icon" style="background:rgba(59,130,246,.15);color:var(--blue)">💎</div>
+      <div>
+        <div class="supp-name">Magnesio</div>
+        <div class="supp-sub">Prioridad ALTA — No está en exámenes pero déficit muy frecuente en Hashimoto</div>
+      </div>
+      <span style="margin-left:auto" class="val-warn">RECOMENDADO</span>
+    </div>
+    <div class="supp-body">
+      <div class="supp-grid">
+        <div class="supp-item"><div class="si-label">Forma recomendada</div><div class="si-val">Glicinato o Citrato</div></div>
+        <div class="supp-item"><div class="si-label">Dosis orientativa</div><div class="si-val">300–400 mg / día</div></div>
+        <div class="supp-item"><div class="si-label">Mejor horario</div><div class="si-val">Por la noche, antes de dormir</div></div>
+        <div class="supp-item"><div class="si-label">Agua recomendada</div><div class="si-val">200–250 mL</div></div>
+        <div class="supp-item"><div class="si-label">Beneficio adicional</div><div class="si-val">Mejora el sueño</div></div>
+        <div class="supp-item"><div class="si-label">Objetivo</div><div class="si-val">Activar Vit D / función tiroidea</div></div>
+      </div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px">
+        <strong style="color:var(--text)">¿Glicinato o citrato?</strong> El glicinato es la mejor opción — alta absorción, no causa efecto laxante y la glicina tiene efecto calmante adicional (mejora el sueño). El citrato es buena alternativa y más económico, pero puede causar heces blandas en dosis altas. <strong style="color:var(--red)">Evitar el óxido de magnesio</strong> — es el más barato del mercado y tiene la peor absorción (&lt;4%).
+      </p>
+      <div class="supp-combos">
+        <span class="combo-ok">✓ Combinar con Vitamina D3</span>
+        <span class="combo-ok">✓ Tomar en la noche</span>
+        <span class="combo-no">✗ No junto al Eutirox (interfiere absorción)</span>
+        <span class="combo-no">✗ Separar del Eutirox ≥ 4 hrs</span>
+        <span class="combo-no">✗ No junto a hierro oral</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OMEGA 3 -->
+  <div class="supp-card">
+    <div class="supp-header">
+      <div class="supp-icon" style="background:rgba(20,184,166,.15);color:var(--teal)">🐟</div>
+      <div>
+        <div class="supp-name">Omega-3 (EPA + DHA)</div>
+        <div class="supp-sub">Prioridad MEDIA-ALTA — HDL bajó 76→60, TG subió 85→122, PCR elevada</div>
+      </div>
+      <span style="margin-left:auto" class="val-warn">INDICADO</span>
+    </div>
+    <div class="supp-body">
+      <div class="supp-grid">
+        <div class="supp-item"><div class="si-label">Forma recomendada</div><div class="si-val">EPA+DHA en aceite de pescado o algas</div></div>
+        <div class="supp-item"><div class="si-label">Dosis orientativa</div><div class="si-val">1–2 g/día de EPA+DHA</div></div>
+        <div class="supp-item"><div class="si-label">Mejor horario</div><div class="si-val">Con el almuerzo o la cena</div></div>
+        <div class="supp-item"><div class="si-label">Agua recomendada</div><div class="si-val">200 mL</div></div>
+        <div class="supp-item"><div class="si-label">Guardar en</div><div class="si-val">Refrigerador (evita oxidación)</div></div>
+        <div class="supp-item"><div class="si-label">Objetivo</div><div class="si-val">Antiinflamatorio / perfil lipídico</div></div>
+      </div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px">
+        <strong style="color:var(--text)">¿Por qué importa ahora?</strong> Tu HOMA-IR calculado es 3.23 (límite de resistencia insulínica), la insulina casi se duplicó en 7 meses y el perfil lipídico empeoró. El Omega-3 (especialmente EPA) tiene efecto antiinflamatorio directo sobre el metabolismo lipídico y puede ayudar a mejorar la sensibilidad a la insulina. También complementa el efecto inmunomodulador del selenio.
+      </p>
+      <div class="supp-combos">
+        <span class="combo-ok">✓ Con comida (reduce reflujo)</span>
+        <span class="combo-ok">✓ Combinar con Vitamina E (antioxidante)</span>
+        <span class="combo-no">✗ No en ayunas (causa náuseas)</span>
+        <span class="combo-no">✗ Cuidado si tomas anticoagulantes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- B12 ALERTA -->
+  <div class="supp-card">
+    <div class="supp-header">
+      <div class="supp-icon" style="background:rgba(239,68,68,.15);color:var(--red)">⛔</div>
+      <div>
+        <div class="supp-name">Vitamina B12 — REDUCIR o SUSPENDER</div>
+        <div class="supp-sub">Nivel actual 956 pg/mL — ya sobre rango (197–771 pg/mL)</div>
+      </div>
+      <span style="margin-left:auto" class="val-bad">ALTO</span>
+    </div>
+    <div class="supp-body">
+      <p style="font-size:13px;color:var(--text2);line-height:1.6">
+        Tu vitamina B12 ya está elevada (956 pg/mL, ref hasta 771). Esto indica que estás suplementando y la dosis es alta para lo que necesitas en este momento. <strong style="color:var(--text)">Acción recomendada: suspender el suplemento actual o reducir a 500 mcg/semana (dosis de mantenimiento).</strong><br><br>
+        El ácido fólico sérico (7.51 ng/mL, ref 3.89–26.8) está en rango normal aunque en el tercio inferior del rango. Puedes incluir fuentes dietéticas de folato (espinaca, lentejas, edamame) en lugar de suplementar.
+      </p>
+    </div>
+  </div>
+
+  <!-- LISTA DE COMPRAS -->
+  <div class="sec mb16" style="margin-top:24px">🛒 Lista práctica de compra en farmacia</div>
+  <div class="card mb20">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Marca lo que ya tienes. Esta lista se incluye en el PDF exportado.</p>
+    <div id="purchase-list"></div>
+  </div>
+</div>
+
+<!-- ━━━━━ ALIMENTACIÓN ━━━━━ -->
+<div id="page-nutrition" class="page">
+  <div class="page-header">
+    <h2>🥗 Plan de Alimentación</h2>
+    <p>Orientado a reducir anticuerpos, controlar inflamación y mejorar el perfil metabólico.</p>
+  </div>
+
+  <div class="clin-alert info mb20">
+    <div class="ai">⚡</div>
+    <div><h4 class="info">Contexto de tus exámenes</h4><p>Anti-TPO subió de 40 → 282 en 7 meses. HOMA-IR 3.23 (señal temprana de resistencia insulínica). PCR 3.11 (inflamación de bajo grado). La alimentación es una herramienta terapéutica real en Hashimoto, no un complemento opcional.</p></div>
+  </div>
+
+  <div class="g2 mb20">
+    <div class="card">
+      <h3 style="color:var(--red)"><span class="ico">❌</span> Reducir o Eliminar</h3>
+      <ul class="food-list">
+        <li><span class="fi">🌾</span><div><strong>Gluten (trigo, cebada, centeno)</strong><br>Relación bidireccional con Hashimoto demostrada. La similitud molecular entre gliadina y tejido tiroideo puede perpetuar el ataque autoinmune. Prueba estricta 6 meses.</div></li>
+        <li><span class="fi">🍬</span><div><strong>Azúcar refinada y ultraprocesados</strong><br>Tu insulina casi se duplicó en 7 meses. El azúcar alimenta la inflamación sistémica que potencia el ataque autoinmune.</div></li>
+        <li><span class="fi">🫘</span><div><strong>Soya y productos derivados</strong><br>Los isoflavonas de soya pueden inhibir la TPO (enzima clave en síntesis de hormona tiroidea) e interferir con la absorción de Eutirox.</div></li>
+        <li><span class="fi">🥛</span><div><strong>Lácteos convencionales (caseína A1)</strong><br>La caseína A1 tiene efecto inflamatorio. Si consumes lácteos, preferir los de vaca A2, oveja o cabra. El yogur y kéfir sin lactosa pueden tolerarse mejor.</div></li>
+        <li><span class="fi">🥤</span><div><strong>Alcohol</strong><br>Aumenta la permeabilidad intestinal ("leaky gut") y puede elevar anticuerpos. Reducir al mínimo durante fase de estabilización.</div></li>
+        <li><span class="fi">☕</span><div><strong>Café (cerca del Eutirox)</strong><br>No es necesario eliminar, pero debe tomarse mínimo 60 minutos después del Eutirox para no interferir con su absorción.</div></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--green)"><span class="ico">✅</span> Priorizar e Incorporar</h3>
+      <ul class="food-list">
+        <li><span class="fi">🐟</span><div><strong>Pescado azul (salmón, sardinas, atún, caballa)</strong><br>Rico en Omega-3 EPA+DHA. Antiinflamatorio directo. Objetivo: 2–3 veces por semana.</div></li>
+        <li><span class="fi">🥦</span><div><strong>Verduras crucíferas COCIDAS</strong><br>Brócoli, coliflor, kale, repollo — deben ir cocidos. Crudos contienen goitrógenos que pueden inhibir la síntesis de hormonas tiroideas en exceso.</div></li>
+        <li><span class="fi">🫐</span><div><strong>Frutas de bajo índice glicémico</strong><br>Berries (arándanos, frambuesas), manzana, pera. Antioxidantes + fibra + sin picos de insulina.</div></li>
+        <li><span class="fi">🥚</span><div><strong>Huevo entero</strong><br>Fuente completa de proteína, selenio natural (yema) y vitamina D. Hasta 2 huevos/día es seguro y beneficioso.</div></li>
+        <li><span class="fi">🌿</span><div><strong>Cúrcuma + pimienta negra</strong><br>La curcumina tiene efecto inmunomodulador y antiinflamatorio. La piperina de la pimienta aumenta su absorción 2000%. Agregar en guisos, sopas y batidos.</div></li>
+        <li><span class="fi">🫒</span><div><strong>Aceite de oliva extra virgen</strong><br>Grasa antiinflamatoria principal. Polifenoles que mejoran la sensibilidad a la insulina. Usarlo en crudo y como aceite principal de cocina.</div></li>
+        <li><span class="fi">🥜</span><div><strong>Nueces de Brasil (2–3 al día)</strong><br>Fuente natural de selenio. 2 unidades diarias aportan aproximadamente 100 mcg de selenio. No exagerar.</div></li>
+        <li><span class="fi">🥑</span><div><strong>Palta/Aguacate</strong><br>Grasa monoinsaturada + potasio + vitamina E. Ayuda a absorber vitaminas liposolubles (D, K).</div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sec mb16">Principios prácticos del día a día</div>
+  <div class="g3 mb20">
+    <div class="card-sm">
+      <h3>🕐 Timing de comidas</h3>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6">Eutirox en ayunas → esperar 30–60 min → desayuno. No saltarse comidas. HOMA-IR elevado = comer cada 3–4 hrs con proteína para estabilizar insulina.</p>
+    </div>
+    <div class="card-sm">
+      <h3>🌾 Sobre el gluten</h3>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6">La prueba terapéutica es 6 meses de eliminación total. No "reducido", sino eliminado. El efecto sobre Anti-TPO puede verse entre los 3 y 6 meses con consistencia.</p>
+    </div>
+    <div class="card-sm">
+      <h3>🧠 Sobre el intestino</h3>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6">El 70% del sistema inmune vive en el intestino. Hashimoto se asocia fuertemente con permeabilidad intestinal aumentada. Probióticos (Lactobacillus, Bifidobacterium) pueden ser un complemento útil.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━━ HORARIOS ━━━━━ -->
+<div id="page-schedule" class="page">
+  <div class="page-header">
+    <h2>⏰ Horarios de Toma y Rutina Diaria</h2>
+    <p>Organiza tu día para maximizar la absorción del Eutirox y los suplementos.</p>
+  </div>
+
+  <div class="dose-hero mb24" style="text-align:left;padding:24px 28px">
+    <div class="direction-badge badge-keep" style="margin-bottom:12px">⏰ Regla de oro del Eutirox</div>
+    <h3 style="font-size:18px;color:var(--text);margin-bottom:8px">Siempre al levantarte, en ayunas, con agua sola</h3>
+    <p style="font-size:13px;color:var(--text2);line-height:1.6">Mínimo <strong style="color:var(--teal)">30 minutos</strong> antes del desayuno (ideal 60 min). Solo con agua (150–250 mL). <strong style="color:var(--red)">Nada más.</strong> No café, no leche, no jugos, no otros medicamentos en ese momento.</p>
+  </div>
+
+  <div class="sec mb16">Restricciones de absorción — qué separar del Eutirox</div>
+  <div class="g2 mb24">
+    <div class="card">
+      <h3><span class="ico">⛔</span> Separar MÍNIMO 30–60 min después del Eutirox</h3>
+      <table class="lab-table" style="width:100%">
+        <thead><tr><th>Sustancia</th><th>Tiempo mínimo</th><th>Razón</th></tr></thead>
+        <tbody>
+          <tr><td>Café / té</td><td class="val-warn">60 min</td><td>Reduce absorción ~30%</td></tr>
+          <tr><td>Leche y lácteos</td><td class="val-warn">60 min</td><td>Calcio y caseína interfieren</td></tr>
+          <tr><td>Jugo de naranja / toronja</td><td class="val-warn">60 min</td><td>Ácido cítrico altera absorción</td></tr>
+          <tr><td>Desayuno en general</td><td class="val-warn">30–60 min</td><td>Alimentos en general interfieren</td></tr>
+          <tr><td>Hierro (suplemento)</td><td class="val-bad">4 horas</td><td>Forma quelato inabsorbible</td></tr>
+          <tr><td>Calcio (suplemento)</td><td class="val-bad">4 horas</td><td>Bloquea absorción intestinal</td></tr>
+          <tr><td>Magnesio (suplemento)</td><td class="val-bad">4 horas</td><td>Interfiere en absorción</td></tr>
+          <tr><td>Antiácidos / IBP</td><td class="val-bad">4 horas</td><td>Alteran pH necesario</td></tr>
+          <tr><td>Fibra en suplemento</td><td class="val-bad">4 horas</td><td>Reduce absorción significativamente</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3><span class="ico">✅</span> Sí puedes tomar junto al Eutirox</h3>
+      <ul class="food-list">
+        <li><span class="fi">💧</span>Agua sola (150–250 mL, ni fría ni caliente)</li>
+        <li><span class="fi">💊</span>Otros medicamentos que no sean los de la lista izquierda — <strong>consulta con tu médico</strong></li>
+      </ul>
+      <div class="clin-alert info" style="margin-top:14px">
+        <div class="ai">💡</div>
+        <div><h4 class="info">Tip de consistencia</h4><p>Tomar el Eutirox siempre a la misma hora reduce la variabilidad de absorción y facilita que el TSH se estabilice. Aunque lo tomes siempre 30 min antes vs. siempre 60 min antes, lo importante es que sea <em>consistente</em>.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec mb16">Horario diario sugerido</div>
+  <div class="card mb20">
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-time"><div class="th">06:30</div><div class="ts">Al despertar</div></div>
+        <div class="tl-dot" style="background:var(--teal)"></div>
+        <div class="tl-content">
+          <div class="tc-title">💊 Eutirox + 200 mL agua</div>
+          <div class="tc-desc">En ayunas, solo con agua temperatura ambiente. Volver a acostarse o iniciar rutina sin desayunar.</div>
+          <div class="tl-tags"><span class="tl-tag">Obligatorio en ayunas</span><span class="tl-tag">Solo agua</span></div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time"><div class="th">07:30</div><div class="ts">+60 min</div></div>
+        <div class="tl-dot" style="background:var(--green)"></div>
+        <div class="tl-content">
+          <div class="tc-title">☕ Desayuno + Vitamina D3 + Omega-3</div>
+          <div class="tc-desc">Desayuno con grasa saludable (huevo, palta, aceite de oliva). Tomar D3 y Omega-3 junto a la comida para mejorar absorción. Recién aquí puedes tomar café.</div>
+          <div class="tl-tags"><span class="tl-tag">D3 con grasa</span><span class="tl-tag">Omega-3 con comida</span><span class="tl-tag">Café solo desde aquí</span></div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time"><div class="th">08:30</div><div class="ts">Mañana</div></div>
+        <div class="tl-dot" style="background:var(--blue)"></div>
+        <div class="tl-content">
+          <div class="tc-title">🏃 Ejercicio (si aplica ese día)</div>
+          <div class="tc-desc">Ideal 1–2 horas después del desayuno. Ver sección de ejercicios para la rutina detallada.</div>
+          <div class="tl-tags"><span class="tl-tag">Post-desayuno</span><span class="tl-tag">Hidratación antes, durante y después</span></div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time"><div class="th">13:00</div><div class="ts">Almuerzo</div></div>
+        <div class="tl-dot" style="background:var(--yellow)"></div>
+        <div class="tl-content">
+          <div class="tc-title">🌿 Almuerzo + Selenio (200 mcg)</div>
+          <div class="tc-desc">El selenio se absorbe mejor con comida. Almuerzo principal con proteína (pescado o pollo), verduras cocidas, aceite de oliva.</div>
+          <div class="tl-tags"><span class="tl-tag">Selenometionina 200 mcg</span><span class="tl-tag">Con comida</span></div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time"><div class="th">19:00</div><div class="ts">Cena</div></div>
+        <div class="tl-dot" style="background:var(--orange)"></div>
+        <div class="tl-content">
+          <div class="tc-title">🍽 Cena liviana</div>
+          <div class="tc-desc">Proteína magra + verduras + poco carbohidrato. Cena ligera favorece el sueño y la sensibilidad a la insulina (importante dado tu HOMA-IR de 3.23).</div>
+          <div class="tl-tags"><span class="tl-tag">Sin gluten</span><span class="tl-tag">Liviana</span></div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time"><div class="th">21:00</div><div class="ts">Antes de dormir</div></div>
+        <div class="tl-dot" style="background:var(--purple)"></div>
+        <div class="tl-content">
+          <div class="tc-title">💎 Magnesio Glicinato (300–400 mg)</div>
+          <div class="tc-desc">El magnesio por la noche mejora la calidad del sueño, reduce cortisol nocturno y activa la conversión de Vitamina D. Tomar 30 min antes de acostarse.</div>
+          <div class="tl-tags"><span class="tl-tag">Glicinato o Citrato</span><span class="tl-tag">Con 200 mL agua</span><span class="tl-tag">Mejora el sueño</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec mb16">💧 Hidratación diaria recomendada</div>
+  <div class="g3 mb20">
+    <div class="card-sm" style="text-align:center">
+      <div style="font-size:36px;font-family:'JetBrains Mono',monospace;color:var(--teal);margin-bottom:8px">2.0–2.5 L</div>
+      <div style="font-size:13px;color:var(--text2)">Meta diaria de agua total<br><small style="color:var(--text3)">Incluyendo la de los alimentos</small></div>
+    </div>
+    <div class="card-sm" style="text-align:center">
+      <div style="font-size:36px;font-family:'JetBrains Mono',monospace;color:var(--blue);margin-bottom:8px">200 mL</div>
+      <div style="font-size:13px;color:var(--text2)">Con el Eutirox al despertar<br><small style="color:var(--text3)">Temperatura ambiente, agua sola</small></div>
+    </div>
+    <div class="card-sm" style="text-align:center">
+      <div style="font-size:36px;font-family:'JetBrains Mono',monospace;color:var(--purple);margin-bottom:8px">200 mL</div>
+      <div style="font-size:13px;color:var(--text2)">Con cada suplemento<br><small style="color:var(--text3)">Selenio, magnesio, D3</small></div>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━━ EJERCICIOS ━━━━━ -->
+<div id="page-exercise" class="page">
+  <div class="page-header">
+    <h2>🏃 Rutina de Ejercicios Complementarios</h2>
+    <p>Adaptada a Hashimoto: metabolismo, energía, inflamación y bienestar sin sobrecargar el sistema inmune.</p>
+  </div>
+
+  <div class="clin-alert info mb20">
+    <div class="ai">💡</div>
+    <div><h4 class="info">Principio clave en Hashimoto</h4><p>El ejercicio intenso y prolongado puede elevar el cortisol y temporalmente elevar anticuerpos. La estrategia es <strong>consistencia moderada</strong>, no intensidad máxima. 3–4 sesiones/semana de 30–45 min es más efectivo que 2 sesiones agotadoras.</p></div>
+  </div>
+
+  <div class="sec mb16">Semana tipo</div>
+  <div class="ex-grid mb20">
+    <div class="ex-day active"><div class="day-name">LUN</div><div class="day-ico">💪</div><div class="day-type">Fuerza / Pesas ligeras</div></div>
+    <div class="ex-day active"><div class="day-name">MAR</div><div class="day-ico">🚶</div><div class="day-type">Caminata activa</div></div>
+    <div class="ex-day rest"><div class="day-name">MIÉ</div><div class="day-ico">🧘</div><div class="day-type">Yoga / descanso activo</div></div>
+    <div class="ex-day active"><div class="day-name">JUE</div><div class="day-ico">💪</div><div class="day-type">Fuerza / Pesas ligeras</div></div>
+    <div class="ex-day active"><div class="day-name">VIE</div><div class="day-ico">🚴</div><div class="day-type">Cardio moderado</div></div>
+    <div class="ex-day rest"><div class="day-name">SÁB</div><div class="day-ico">🧘</div><div class="day-type">Yoga / estiramientos</div></div>
+    <div class="ex-day rest"><div class="day-name">DOM</div><div class="day-ico">😴</div><div class="day-type">Descanso completo</div></div>
+  </div>
+
+  <div class="g2 mb20">
+    <div>
+      <div class="ex-block">
+        <h4>💪 Días de Fuerza (Lun / Jue) — 35–45 min</h4>
+        <ul class="ex-list">
+          <li>Calentamiento articular: 5 min rotaciones de hombros, cadera y rodillas</li>
+          <li>Sentadillas con peso corporal o mancuernas livianas: 3 × 12 reps</li>
+          <li>Prensa de pecho con mancuernas (o flexiones modificadas): 3 × 10 reps</li>
+          <li>Remo con mancuerna unilateral: 3 × 12 reps cada lado</li>
+          <li>Peso muerto rumano (peso liviano): 3 × 10 reps</li>
+          <li>Plancha frontal: 3 × 20–30 segundos</li>
+          <li>Estiramiento final: 10 min (no saltarse — reduce cortisol)</li>
+        </ul>
+      </div>
+      <div class="ex-block">
+        <h4>🚶 Caminata activa (Mar) — 30–40 min</h4>
+        <ul class="ex-list">
+          <li>Ritmo: conversacional (puedes hablar sin ahogarte)</li>
+          <li>Terreno: preferir superficies irregulares (mejora propiocepción) o parque</li>
+          <li>Objetivo: zona cardiaca 50–65% de la frecuencia máxima</li>
+          <li>Llevar 500 mL de agua</li>
+          <li>Ideal: al aire libre (exposición solar → vitamina D)</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="ex-block">
+        <h4>🚴 Cardio moderado (Vie) — 30–40 min</h4>
+        <ul class="ex-list">
+          <li>Opciones: bicicleta estática, elíptica, nadar, bailar</li>
+          <li>Intensidad: moderada — puedes mantener conversación</li>
+          <li><strong>Evitar:</strong> HIIT agresivo o entrenamientos de más de 60 min continuos</li>
+          <li>El objetivo no es quemar al máximo, es activar el metabolismo sin disparar cortisol</li>
+          <li>Hidratarse antes (250 mL) y después (400 mL)</li>
+        </ul>
+      </div>
+      <div class="ex-block">
+        <h4>🧘 Yoga / Movilidad (Mié / Sáb) — 20–30 min</h4>
+        <ul class="ex-list">
+          <li>Yoga restaurativo o Yin Yoga (posturas de largo mantenimiento)</li>
+          <li>Énfasis en: torsiones (estimulan vagal), flexiones hacia adelante (calman el sistema nervioso)</li>
+          <li>Respiración diafragmática: 5 min de respiración 4-7-8 al final</li>
+          <li>Meditación guiada opcional: 10 min — el cortisol bajo = menos inflamación</li>
+          <li>Estos días son parte del tratamiento, no "días perdidos"</li>
+        </ul>
+      </div>
+      <div class="ex-block">
+        <h4>📊 Indicadores de que vas bien</h4>
+        <ul class="ex-list">
+          <li>Energía estable durante el día (sin caídas bruscas a las 15:00)</li>
+          <li>Sueño profundo de 7–8 horas</li>
+          <li>No fatiga excesiva post-ejercicio (señal de sobreentrenamiento en Hashimoto)</li>
+          <li>TSH estabilizándose en controles siguientes</li>
+          <li>Anti-TPO en tendencia descendente a los 3–6 meses</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━━ PDF ━━━━━ -->
+<div id="page-pdf" class="page">
+  <div class="page-header">
+    <h2>📄 Exportar Plan Completo PDF</h2>
+    <p>Genera un documento completo con tu situación actual, dosis, suplementos, horarios y recomendaciones.</p>
+  </div>
+  <div class="clin-alert info mb20">
+    <div class="ai">📋</div>
+    <div><h4 class="info">El PDF incluye</h4><p>Resumen de exámenes actuales · Interpretación clínica · Dosis sugerida de Eutirox · Suplementos con tipo, dosis y horario · Lista de compra · Horario diario · Rutina de ejercicios · Recomendaciones de alimentación</p></div>
+  </div>
+  <div class="g2 mb20">
+    <div class="card">
+      <h3><span class="ico">⚙️</span> Opciones de exportación</h3>
+      <div class="field"><label>Nombre del paciente</label><input type="text" id="pdf-name" value="Yoselyn Galleguillos Tapia"></div>
+      <div class="field"><label>Médico tratante</label><input type="text" id="pdf-doctor" value="Dra. Coello Alexandra"></div>
+      <div class="field"><label>Fecha del plan</label><input type="date" id="pdf-date"></div>
+      <div class="field"><label>Notas adicionales</label><input type="text" id="pdf-notes" placeholder="Observaciones para incluir en el PDF"></div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">📑</span> Secciones a incluir</h3>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="pdf-inc-exams" checked> Resumen de exámenes actuales</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="pdf-inc-dose" checked> Dosis de Eutirox y análisis</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="pdf-inc-supps" checked> Guía de suplementos detallada</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="pdf-inc-purchase" checked> Lista de compra de suplementos</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="pdf-inc-food" checked> Recomendaciones de alimentación</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="pdf-inc-schedule" checked> Horario diario de toma</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="pdf-inc-exercise" checked> Rutina de ejercicios</label>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-primary btn-full mb16" onclick="exportPDF()" style="font-size:15px;padding:16px">📄 Generar y Descargar PDF</button>
+  <div class="disclaimer">
+    El PDF generado está basado en los datos ingresados en esta aplicación. Presenta los resultados a tu médico para validar cualquier ajuste de dosis o suplementación.
+  </div>
+</div>
+
+<!-- ━━━━━ DATOS / PORTABILIDAD ━━━━━ -->
+<div id="page-data" class="page">
+  <div class="page-header">
+    <h2>💾 Mis Datos y Portabilidad</h2>
+    <p>Exporta tus datos para llevarlos a otro equipo, o importa un archivo guardado anteriormente.</p>
+  </div>
+
+  <div class="clin-alert info mb20">
+    <div class="ai">💡</div>
+    <div><h4 class="info">¿Cómo llevar la app a otro equipo?</h4><p>1. Copia el archivo <code>eutirox_manager.html</code> al nuevo equipo. 2. Exporta tus datos con el botón abajo (genera un .json). 3. En el nuevo equipo, importa ese .json. Tus datos quedan restaurados completos.</p></div>
+  </div>
+
+  <div class="g2 mb20">
+    <div class="card">
+      <h3><span class="ico">📤</span> Exportar datos</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Descarga todos tus exámenes, configuraciones y resultados guardados en un archivo .json que puedes importar en otro equipo.</p>
+      <button class="btn btn-secondary btn-full" onclick="exportData()">📥 Descargar mis datos (.json)</button>
+    </div>
+    <div class="card">
+      <h3><span class="ico">📥</span> Importar datos</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Carga un archivo .json exportado anteriormente para restaurar todos tus datos en este equipo.</p>
+      <input type="file" id="import-file" accept=".json" onchange="importData(this)" style="display:none">
+      <button class="btn btn-secondary btn-full" onclick="document.getElementById('import-file').click()">📂 Cargar archivo .json</button>
+    </div>
+  </div>
+
+  <div class="sec mb16">Estado del almacenamiento local</div>
+  <div class="card mb20" id="storage-status"></div>
+
+  <div class="sec mb16">Acciones peligrosas</div>
+  <div class="card" style="border-color:rgba(239,68,68,.3)">
+    <h3 style="color:var(--red)"><span class="ico">⚠️</span> Zona de peligro</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Estas acciones son irreversibles. Exporta tus datos antes de continuar.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-danger btn-sm" onclick="resetAll()">🗑 Borrar todos los datos</button>
+    </div>
+  </div>
+</div>
+
+</main><!-- /main -->
+
+<!-- ══════ MODAL ══════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-content">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ══════ TOASTS ══════ -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ══════ SCRIPTS ══════ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// ════════════════════════════════════════
+//  CONSTANTS & STATE
+// ════════════════════════════════════════
+const COMMERCIAL_DOSES = [25,50,75,88,100,112,125,137,150];
+
+const OPTIMAL = {
+  tsh:{lo:1.0,hi:2.5,labLo:0.27,labHi:4.20,unit:'uUI/mL',name:'TSH'},
+  ft4:{lo:1.0,hi:1.4,labLo:0.93,labHi:1.70,unit:'ng/dL',name:'FT4'},
+  ft3:{lo:3.0,hi:4.0,labLo:2.00,labHi:4.40,unit:'pg/mL',name:'FT3'},
+  antiTPO:{lo:0,hi:34,labLo:0,labHi:5.61,unit:'UI/mL',name:'Anti-TPO'},
+  vitD:{lo:40,hi:60,labLo:20,labHi:50,unit:'ng/mL',name:'Vitamina D'},
+  b12:{lo:400,hi:600,labLo:197,labHi:771,unit:'pg/mL',name:'B12'},
+  insulin:{lo:2.6,hi:10,labLo:2.6,labHi:24.9,unit:'uUI/mL',name:'Insulina'},
+  glucose:{lo:75,hi:90,labLo:70,labHi:99,unit:'mg/dL',name:'Glucosa'},
+  hdl:{lo:70,hi:999,labLo:60,labHi:999,unit:'mg/dL',name:'HDL'},
+  tg:{lo:0,hi:100,labLo:0,labHi:150,unit:'mg/dL',name:'Triglicéridos'},
+  pcr:{lo:0,hi:1.0,labLo:0,labHi:3.0,unit:'mg/L',name:'PCR'},
+};
+
+const DEFAULT_EXAMS = [
+  {id:'exam-2025-09',date:'2025-09-08',label:'Control Sep 2025',dose:null,
+   tsh:0.106,ft4:1.92,ft3:3.01,antiTPO:40.64,antiTG:1.01,
+   vitD:22,b12:null,ferritin:null,folate:13.3,
+   glucose:79,insulin:8.1,hba1c:null,pcr:null,
+   cholTotal:188,hdl:76,ldl:94,tg:85},
+  {id:'exam-2026-04',date:'2026-04-06',label:'Control Abr 2026 (actual)',dose:null,
+   tsh:0.212,ft4:1.72,ft3:3.13,antiTPO:282.08,antiTG:2.28,
+   vitD:19.6,b12:956,ferritin:94.4,folate:7.51,
+   glucose:92,insulin:14.2,hba1c:4.4,pcr:3.11,
+   cholTotal:165,hdl:60,ldl:80,tg:122}
+];
+
+let state = {exams:[], lastCalcResult:null};
+let charts = {};
+
+// ════════════════════════════════════════
+//  STORAGE
+// ════════════════════════════════════════
+function loadState(){
+  try{
+    const raw = localStorage.getItem('eutirox-state');
+    if(raw){state = JSON.parse(raw);}
+    else{state={exams:[...DEFAULT_EXAMS],lastCalcResult:null}; saveState();}
+  }catch(e){state={exams:[...DEFAULT_EXAMS],lastCalcResult:null};}
+}
+function saveState(){
+  try{localStorage.setItem('eutirox-state',JSON.stringify(state));}catch(e){}
+}
+function getLatestExam(){
+  return state.exams.sort((a,b)=>new Date(b.date)-new Date(a.date))[0]||null;
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify({eutiroxState:state,version:'1.0',exported:new Date().toISOString()},null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='eutirox_datos_yoselyn.json'; a.click();
+  toast('Datos exportados correctamente','success');
+}
+function importData(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      if(data.eutiroxState){state=data.eutiroxState; saveState(); refreshAll(); toast('Datos importados correctamente','success');}
+      else{toast('Archivo no válido','error');}
+    }catch{toast('Error al leer el archivo','error');}
+  };
+  reader.readAsText(file);
+}
+function resetAll(){
+  if(confirm('¿Seguro? Esto borrará TODOS los datos incluyendo el historial.')){
+    localStorage.removeItem('eutirox-state');
+    state={exams:[...DEFAULT_EXAMS],lastCalcResult:null};
+    saveState(); refreshAll(); toast('Datos restablecidos a valores iniciales','info');
+  }
+}
+function clearHistory(){
+  if(confirm('¿Eliminar todos los exámenes del historial?')){
+    state.exams=[...DEFAULT_EXAMS]; saveState(); refreshHistory(); toast('Historial limpiado','info');
+  }
+}
+function updateStorageStatus(){
+  const el = document.getElementById('storage-status'); if(!el) return;
+  const size = JSON.stringify(state).length;
+  el.innerHTML = `
+    <div class="g3">
+      <div><div class="kpi info"><div class="label">Exámenes guardados</div><div class="value info">${state.exams.length}</div></div></div>
+      <div><div class="kpi info"><div class="label">Espacio usado</div><div class="value info">${(size/1024).toFixed(1)}</div><div class="unit">KB de localStorage</div></div></div>
+      <div><div class="kpi ok"><div class="label">Estado</div><div class="value ok" style="font-size:16px">Activo</div></div></div>
+    </div>`;
+}
+
+// ════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+  });
+  // Refresh relevant page
+  if(id==='dashboard') refreshDashboard();
+  if(id==='history')   refreshHistory();
+  if(id==='data')      updateStorageStatus();
+  if(id==='pdf')       initPDFPage();
+}
+
+// ════════════════════════════════════════
+//  STATUS HELPERS
+// ════════════════════════════════════════
+function getStatus(key, val){
+  const r = OPTIMAL[key]; if(!r||val==null) return 'info';
+  if(key==='tsh'){
+    if(val<r.lo||val>r.hi) return val<r.labLo||val>r.labHi ? 'bad' : 'warn';
+    return 'ok';
+  }
+  if(key==='antiTPO') return val>r.hi?'bad':'ok';
+  if(key==='vitD')    return val<r.lo?'bad':val<r.hi?'warn':'ok';
+  if(key==='b12')     return val>r.labHi?'warn':val<r.labLo?'warn':'ok';
+  if(key==='insulin') return val>r.hi?'warn':'ok';
+  if(key==='pcr')     return val>r.hi?'bad':'ok';
+  if(key==='hdl')     return val<r.lo?'warn':'ok';
+  if(key==='tg')      return val>r.labHi?'warn':val>r.hi?'info':'ok';
+  if(val>=r.lo&&val<=r.hi) return 'ok';
+  if(val<r.labLo||val>r.labHi) return 'bad';
+  return 'warn';
+}
+function fmt(v,d=2){return v==null?'—':Number(v).toFixed(d);}
+function r1(v){return Math.round(v*10)/10;}
+function r0(v){return Math.round(v);}
+function nearest(d){
+  return COMMERCIAL_DOSES.reduce((a,b)=>Math.abs(b-d)<Math.abs(a-d)?b:a);
+}
+function nextLower(d){
+  const i = COMMERCIAL_DOSES.findIndex(x=>x>=d);
+  return i>0?COMMERCIAL_DOSES[i-1]:COMMERCIAL_DOSES[0];
+}
+function nextHigher(d){
+  const i = [...COMMERCIAL_DOSES].reverse().findIndex(x=>x<=d);
+  if(i<0) return COMMERCIAL_DOSES[COMMERCIAL_DOSES.length-1];
+  const idx = COMMERCIAL_DOSES.length-1-i;
+  return COMMERCIAL_DOSES[Math.min(idx+1,COMMERCIAL_DOSES.length-1)];
+}
+
+// ════════════════════════════════════════
+//  CLINICAL DOSE LOGIC
+// ════════════════════════════════════════
+
+// Evalúa el estado clínico puro basado en TSH + FT4 actuales
+function clinicalInterpretation(tsh, ft4, currentDose){
+  const isOverdose = tsh < 0.27 && ft4 > 1.70;
+  const isLowTSH   = tsh < 1.0  && !isOverdose;
+  const isHighTSH  = tsh > 2.5;
+
+  let direction, badge, msg, suggested;
+  if(isOverdose){
+    direction='down'; badge='badge-down';
+    suggested = currentDose ? nextLower(currentDose) : null;
+    msg='<strong style="color:var(--red)">⚠️ Señal de sobredosificación:</strong> TSH suprimido + FT4 elevado. '
+       +'Se recomienda <strong>reducción gradual al escalón inmediatamente inferior</strong> '
+       +'(típicamente 12.5–25 mcg menos). No suspender el tratamiento. Validar con endocrinólogo.';
+  } else if(isLowTSH){
+    direction='down'; badge='badge-down';
+    suggested = currentDose ? nextLower(currentDose) : null;
+    msg='TSH bajo del rango óptimo Hashimoto (1.0–2.5). Se recomienda <strong>reducción gradual</strong>. '
+       +'Puede ser hashitoxicosis transitoria — confirmar con médico.';
+  } else if(isHighTSH){
+    direction='up'; badge='badge-up';
+    suggested = currentDose ? nextHigher(currentDose) : null;
+    msg='TSH elevado: la tiroides está trabajando poco. Se recomienda <strong>incremento gradual</strong> '
+       +'al escalón superior disponible.';
+  } else {
+    direction='keep'; badge='badge-keep';
+    suggested = currentDose;
+    msg='TSH dentro del rango óptimo Hashimoto (1.0–2.5 uUI/mL). <strong>Mantener la dosis actual.</strong> '
+       +'Controles periódicos cada 3–6 meses.';
+  }
+  return {direction, badge, msg, suggested};
+}
+
+// ── NUEVA FUNCIÓN: validación clínica de la dosis interpolada ──
+// Retorna { finalDose, isOverridden, overrideReasons, safetyLevel }
+// safetyLevel: 'valid' | 'extrapolation' | 'unsafe'
+function validateClinicalDose(rawDose, factor, dose2, tsh2, ft42){
+  const reasons = [];
+  let safetyLevel = 'valid';
+  let isOverridden = false;
+
+  // Criterio 1: dosis negativa o cero → inválida de por sí
+  if(rawDose <= 0){
+    reasons.push(`La interpolación arrojó un valor negativo (${r1(rawDose)} mcg) — matemáticamente imposible como dosis.`);
+    safetyLevel = 'unsafe'; isOverridden = true;
+  }
+
+  // Criterio 2: factor fuera del rango de interpolación válida (< 0 o > 1.5)
+  // factor 0–1 = interpolación entre los puntos conocidos (válida)
+  // factor > 1 o < 0 = extrapolación fuera de los datos reales
+  if(Math.abs(factor) > 1.5){
+    reasons.push(`Factor de extrapolación = ${r1(factor)} (rango seguro: 0 a 1). El TSH objetivo está muy lejos de los dos puntos medidos — la recta extrapola demasiado lejos para ser confiable.`);
+    if(safetyLevel !== 'unsafe') safetyLevel = 'extrapolation';
+    isOverridden = true;
+  } else if(factor < 0 || factor > 1){
+    reasons.push(`Factor de interpolación = ${r1(factor)}: el TSH objetivo está fuera del rango medido entre los dos exámenes. Resultado es extrapolación, no interpolación.`);
+    if(safetyLevel === 'valid') safetyLevel = 'extrapolation';
+    isOverridden = true;
+  }
+
+  // Criterio 3: reducción mayor al 50% de la dosis actual en un solo paso
+  if(!isNaN(dose2) && dose2 > 0 && rawDose < dose2 * 0.5){
+    reasons.push(`La dosis calculada (${r1(rawDose)} mcg) es menos del 50% de la dosis actual (${dose2} mcg). Una reducción tan brusca no es clínicamente prudente en un solo ajuste.`);
+    if(safetyLevel === 'valid') safetyLevel = 'extrapolation';
+    isOverridden = true;
+  }
+
+  // Criterio 4: aumento mayor al 50% de la dosis actual en un solo paso
+  if(!isNaN(dose2) && dose2 > 0 && rawDose > dose2 * 1.5){
+    reasons.push(`La dosis calculada (${r1(rawDose)} mcg) excede en más del 50% la dosis actual (${dose2} mcg). Un incremento tan pronunciado no es clínicamente prudente en un solo ajuste.`);
+    if(safetyLevel === 'valid') safetyLevel = 'extrapolation';
+    isOverridden = true;
+  }
+
+  // Criterio 5: dosis calculada por debajo del mínimo comercial existente
+  if(rawDose > 0 && rawDose < COMMERCIAL_DOSES[0]){
+    reasons.push(`La dosis calculada (${r1(rawDose)} mcg) está por debajo de la presentación comercial mínima disponible (${COMMERCIAL_DOSES[0]} mcg).`);
+    if(safetyLevel === 'valid') safetyLevel = 'extrapolation';
+    isOverridden = true;
+  }
+
+  // Si fue anulada → calcular dosis final por regla clínica conservadora
+  let finalDose = rawDose;
+  if(isOverridden){
+    const clin = clinicalInterpretation(tsh2, ft42, dose2);
+    finalDose = clin.suggested || dose2; // escalón arriba/abajo o mantener
+  }
+
+  // Asegurar límites absolutos en cualquier caso
+  finalDose = Math.max(COMMERCIAL_DOSES[0], finalDose);
+  finalDose = Math.min(200, finalDose);
+
+  return {finalDose, isOverridden, overrideReasons: reasons, safetyLevel};
+}
+
+// ════════════════════════════════════════
+//  CALCULATOR
+// ════════════════════════════════════════
+function calculate(){
+  const tsh1   = parseFloat(document.getElementById('c-tsh1').value);
+  const tsh2   = parseFloat(document.getElementById('c-tsh2').value);
+  const ft41   = parseFloat(document.getElementById('c-ft41').value);
+  const ft42   = parseFloat(document.getElementById('c-ft42').value);
+  const dose1  = parseFloat(document.getElementById('c-dose1').value);
+  const dose2  = parseFloat(document.getElementById('c-dose2').value);
+  const target = parseFloat(document.getElementById('c-target').value)||1.5;
+  const weight = parseFloat(document.getElementById('c-weight').value);
+  const name   = document.getElementById('c-name').value||'Cálculo '+new Date().toLocaleDateString('es-CL');
+
+  if(isNaN(dose1)||dose1<=0){toast('Ingresa la dosis del examen Sep 2025','error'); return;}
+  if(isNaN(dose2)||dose2<=0){toast('Ingresa la dosis actual','error'); return;}
+  if(Math.abs(tsh2-tsh1)<0.001){toast('Los TSH son idénticos — no es posible interpolar','error'); return;}
+
+  // ── PASO 1: Matemática pura (sin filtro clínico) ──
+  const factor   = (target - tsh1) / (tsh2 - tsh1);
+  const rawDose  = dose1 + factor * (dose2 - dose1);   // puede ser negativa, enorme, etc.
+
+  // ── PASO 2: Validación clínica ──
+  const validation = validateClinicalDose(rawDose, factor, dose2, tsh2, ft42);
+  const finalDose  = validation.finalDose;
+
+  // ── PASO 3: Datos derivados de la dosis FINAL (segura) ──
+  const finalWeekly  = r0(finalDose * 7);
+  const finalMonthly = r0(finalDose * 30);
+  const commercial   = nearest(finalDose);
+  const clin         = clinicalInterpretation(tsh2, ft42, dose2);
+
+  // Save result incluyendo ambos valores (raw y final)
+  state.lastCalcResult = {
+    // Dosis final segura (la que se recomienda)
+    calcDose: r1(finalDose), calcWeekly: finalWeekly, calcMonthly: finalMonthly, commercial,
+    // Matemática bruta (visible como referencia)
+    rawDose: r1(rawDose), factor: r1(factor),
+    // Metadatos
+    dose1, dose2, tsh1, tsh2, ft41, ft42, target,
+    direction: clin.direction, name, weight: weight||null, date: new Date().toISOString(),
+    // Validación
+    isOverridden: validation.isOverridden,
+    overrideReasons: validation.overrideReasons,
+    safetyLevel: validation.safetyLevel
+  };
+  saveState();
+
+  const latest = getLatestExam();
+  if(latest){ latest.dose = dose2; saveState(); }
+
+  renderCalcResult(state.lastCalcResult, clin, weight);
+  refreshDashboardDose();
+}
+
+function renderCalcResult(r, clin, weight){
+  const dirText = r.direction==='down'?'BAJAR DOSIS':r.direction==='up'?'SUBIR DOSIS':'MANTENER DOSIS';
+  const diffFinal = r1(r.calcDose - r.dose2);
+  const diffText = diffFinal>0?`+${r1(Math.abs(diffFinal))} mcg respecto a tu dosis actual`:
+                   diffFinal<0?`−${r1(Math.abs(diffFinal))} mcg respecto a tu dosis actual`:
+                   'Igual a la dosis actual';
+
+  let weightRow = '';
+  if(weight&&weight>0){
+    const mpk = r1(r.calcDose/weight);
+    weightRow=`<div class="kpi info" style="margin-top:16px;text-align:center">
+      <div class="label">Dosis por peso corporal</div>
+      <div class="value info" style="font-size:24px">${mpk}</div>
+      <div class="unit">mcg/kg/día · Referencia hipotiroidismo completo: 1.6–1.8 mcg/kg/día</div>
+    </div>`;
+  }
+
+  // ── Bloque de advertencia de sobreescritura (solo si aplica) ──
+  let overrideBlock = '';
+  if(r.isOverridden){
+    const levelColor = r.safetyLevel==='unsafe' ? 'bad' : 'warn';
+    const levelIcon  = r.safetyLevel==='unsafe' ? '🚫' : '⚠️';
+    const levelTitle = r.safetyLevel==='unsafe'
+      ? 'La interpolación produjo un resultado clínicamente inválido'
+      : 'La interpolación extrapoló fuera del rango seguro';
+    overrideBlock = `
+      <div class="clin-alert ${levelColor} mb20">
+        <div class="ai">${levelIcon}</div>
+        <div>
+          <h4 class="${levelColor}">${levelTitle} — se aplicó corrección clínica</h4>
+          <p style="margin-bottom:8px">El cálculo matemático bruto fue <strong style="color:var(--red)">${r.rawDose} mcg/día</strong>
+            (factor de extrapolación: ${r.factor}). Este valor no es apto como recomendación por las razones siguientes:</p>
+          <ul style="margin:6px 0 8px 16px;font-size:12px;color:var(--text2);line-height:1.7">
+            ${r.overrideReasons.map(rs=>`<li>${rs}</li>`).join('')}
+          </ul>
+          <p>En consecuencia, <strong>la dosis recomendada se determina por regla clínica conservadora</strong>,
+             no por el resultado matemático. Ver sección "Recomendación final segura" abajo.</p>
+        </div>
+      </div>`;
+  }
+
+  const el = document.getElementById('calc-result');
+  el.style.display='block';
+  el.innerHTML=`
+    <div class="sec mb16">Resultado del cálculo</div>
+
+    ${overrideBlock}
+
+    <!-- ══ RECOMENDACIÓN FINAL (siempre primera y más grande) ══ -->
+    <div class="dose-hero mb20">
+      <div class="direction-badge ${clin.badge}" style="margin-bottom:14px">
+        ${r.direction==='down'?'📉 Reducir dosis':r.direction==='up'?'📈 Aumentar dosis':'✅ Mantener dosis'}
+      </div>
+      <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">
+        ${r.isOverridden ? '🛡️ Recomendación clínica final (corregida)' : '✅ Dosis calculada — clínicamente validada'}
+      </div>
+      <div class="daily-value">${r1(r.calcDose)}</div>
+      <div class="daily-unit">mcg / día</div>
+      <div style="font-size:13px;color:var(--text3);margin-top:8px">
+        ${diffText} · Presentación: <strong style="color:var(--teal)">Eutirox ${r.commercial} mcg</strong>
+      </div>
+      <div class="dose-freq">
+        <div class="freq-card">
+          <div class="fl">Semanal</div><div class="fv">${r.calcWeekly}</div><div class="fu">mcg / semana</div>
+        </div>
+        <div class="freq-card">
+          <div class="fl">Mensual</div><div class="fv">${r.calcMonthly}</div><div class="fu">mcg / 30 días</div>
+        </div>
+      </div>
+      ${weightRow}
+    </div>
+
+    <!-- ══ INTERPRETACIÓN CLÍNICA ══ -->
+    <div class="clin-alert ${r.direction==='keep'?'ok':r.direction==='up'?'warn':'bad'} mb20">
+      <div class="ai">${r.direction==='keep'?'✅':r.direction==='up'?'📈':'📉'}</div>
+      <div>
+        <h4 class="${r.direction==='keep'?'ok':r.direction==='up'?'warn':'bad'}">${dirText}</h4>
+        <p>${clin.msg}</p>
+      </div>
+    </div>
+
+    <!-- ══ CÁLCULO MATEMÁTICO (referencia) ══ -->
+    <div class="card mb20">
+      <h3><span class="ico">🧮</span> Cálculo matemático paso a paso <span style="font-size:11px;color:var(--text3);font-weight:400;margin-left:8px">(solo referencia — no es la recomendación final)</span></h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+        La interpolación lineal asume una relación lineal entre dosis y TSH dentro del rango medido.
+        Es válida cuando el factor está entre 0 y 1 (interpolación real). Cuando el factor sale de ese rango
+        la fórmula <em>extrapola</em> y el resultado matemático pierde valor clínico.
+        <strong style="color:var(--text)">Factor calculado: ${r.factor}
+        ${Math.abs(r.factor)<=1?'✅ dentro del rango de interpolación válida':'⚠️ fuera del rango — resultado es extrapolación'}.</strong>
+      </p>
+      <div class="formula">
+        <span class="fc">// Puntos conocidos:</span><br>
+        Punto 1 · ${r.tsh1} uUI/mL  →  ${r.dose1} mcg/día<br>
+        Punto 2 · ${r.tsh2} uUI/mL  →  ${r.dose2} mcg/día<br>
+        TSH objetivo: <span class="fv">${r.target} uUI/mL</span><br><br>
+        <span class="fc">// Paso 1 — Factor de extrapolación/interpolación:</span><br>
+        factor = (${r.target} − ${r.tsh1}) / (${r.tsh2} − ${r.tsh1}) = <span class="fv">${r.factor}</span>
+        <span class="fc"> ← ${Math.abs(r.factor)<=1?'interpolación':'⚠️ extrapolación'}</span><br><br>
+        <span class="fc">// Paso 2 — Dosis matemática bruta:</span><br>
+        dosis = ${r.dose1} + ${r.factor} × (${r.dose2} − ${r.dose1})<br>
+        <span style="color:${r.isOverridden?'var(--red)':'var(--green)'}">dosis bruta = ${r.rawDose} mcg/día
+        ${r.isOverridden?'← ⛔ NO VÁLIDA CLÍNICAMENTE':'← ✅ validada'}</span><br><br>
+        ${r.isOverridden?`<span class="fc">// Paso 3 — Corrección clínica obligatoria:</span><br>
+        El valor bruto (${r.rawDose} mcg) fue reemplazado por ajuste clínico conservador.<br>
+        <span class="fr">Dosis final recomendada = ${r1(r.calcDose)} mcg/día · Eutirox ${r.commercial} mcg</span>`
+        :`<span class="fr">Dosis final = ${r1(r.calcDose)} mcg/día · Eutirox ${r.commercial} mcg</span>`}
+      </div>
+    </div>
+
+    <!-- ══ TABLA DOSIS COMERCIALES ══ -->
+    <div class="card mb16">
+      <h3><span class="ico">💊</span> Presentaciones comerciales Eutirox — referencia</h3>
+      <div style="overflow-x:auto">
+        <table class="lab-table" style="width:100%">
+          <thead><tr><th>Presentación</th><th>Semanal</th><th>Mensual</th><th>vs recomendación final</th></tr></thead>
+          <tbody>
+            ${COMMERCIAL_DOSES.map(d=>{
+              const isFinal  = d===r.commercial;
+              const diffVsFinal = r1(d - r.calcDose);
+              return`<tr style="${isFinal?'background:rgba(20,184,166,.06);':''}">
+                <td><strong style="${isFinal?'color:var(--teal)':''}">${d} mcg/día${isFinal?' ⬅ recomendada':''}</strong></td>
+                <td>${d*7}</td><td>${d*30}</td>
+                <td style="color:${Math.abs(d-r.calcDose)<0.1?'var(--green)':Math.abs(d-r.calcDose)<=12.5?'var(--yellow)':'var(--text3)'}">
+                  ${diffVsFinal>0?'+':''}${diffVsFinal} mcg
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>⚕️ Aviso médico:</strong> Esta herramienta separa el cálculo matemático (referencia) de la recomendación clínica final (segura).
+      Cuando la interpolación extrapola fuera del rango observado, <strong>la dosis final se determina por regla clínica conservadora</strong>,
+      no por el número matemático. Cualquier ajuste de Eutirox debe ser gradual y supervisado por tu endocrinólogo.
+      Nunca suspender el tratamiento de forma automática.
+    </div>`;
+
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+  toast('Cálculo completado','success');
+}
+
+// ════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════
+function refreshDashboard(){
+  const ex = getLatestExam(); if(!ex) return;
+  document.getElementById('dash-date').textContent =
+    new Date(ex.date+'T12:00:00').toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'});
+
+  // Alert
+  const alertBox = document.getElementById('dash-alert-box');
+  if(ex.tsh<0.27&&ex.ft4>1.70){
+    alertBox.innerHTML=`<div class="clin-alert bad"><div class="ai">🚨</div><div><h4 class="bad">Señal de sobredosificación activa</h4><p>TSH ${ex.tsh} uUI/mL (suprimido) + FT4 ${ex.ft4} ng/dL (elevado). Consultar endocrinólogo para ajuste de dosis. No suspender tratamiento.</p></div></div>`;
+  } else if(ex.tsh>2.5){
+    alertBox.innerHTML=`<div class="clin-alert warn"><div class="ai">📈</div><div><h4 class="warn">TSH sobre rango óptimo</h4><p>TSH ${ex.tsh}. Posible subdosificación. Revisar con médico.</p></div></div>`;
+  } else {
+    alertBox.innerHTML=`<div class="clin-alert ok"><div class="ai">✅</div><div><h4 class="ok">Tiroides en rango objetivo</h4><p>TSH ${ex.tsh} dentro del rango 1.0–2.5 uUI/mL. Mantener dosis actual y controles periódicos.</p></div></div>`;
+  }
+
+  // KPIs Thyroid
+  const kt = document.getElementById('dash-kpis-thyroid');
+  kt.innerHTML = [
+    {k:'tsh',v:ex.tsh,d:3,label:'TSH',unit:'uUI/mL',ref:'Óptimo: 1.0–2.5'},
+    {k:'ft4',v:ex.ft4,d:2,label:'FT4 Libre',unit:'ng/dL',ref:'Ref: 0.93–1.70'},
+    {k:'ft3',v:ex.ft3,d:2,label:'FT3 Libre',unit:'pg/mL',ref:'Ref: 2.00–4.40'},
+    {k:'antiTPO',v:ex.antiTPO,d:1,label:'Anti-TPO',unit:'UI/mL',ref:'Ref: <5.61'},
+  ].map(({k,v,d,label,unit,ref})=>{
+    const s=getStatus(k,v), prev=state.exams.length>1?state.exams.sort((a,b)=>new Date(a.date)-new Date(b.date))[state.exams.length-2][k]:null;
+    const diff = prev!=null&&v!=null?r1(v-prev):null;
+    const trendHtml = diff!=null?`<div class="trend ${diff>0?'trend-up':'trend-down'}">${diff>0?'▲':'▼'} ${Math.abs(diff)} vs anterior</div>`:'';
+    return `<div class="kpi ${s}"><div class="label">${label}</div><div class="value ${s}">${fmt(v,d)}</div><div class="unit">${unit}</div><div class="ref">${ref}</div>${trendHtml}</div>`;
+  }).join('');
+
+  // KPIs Meta
+  const km = document.getElementById('dash-kpis-meta');
+  km.innerHTML = [
+    {k:'vitD',v:ex.vitD,d:1,label:'Vitamina D',unit:'ng/mL',ref:'Óptimo: 40–60'},
+    {k:'b12',v:ex.b12,d:0,label:'Vitamina B12',unit:'pg/mL',ref:'Ref: 197–771'},
+    {k:'insulin',v:ex.insulin,d:1,label:'Insulina',unit:'uUI/mL',ref:'Óptimo: <10'},
+    {k:'pcr',v:ex.pcr,d:2,label:'PCR Ultrasensible',unit:'mg/L',ref:'Óptimo: <1.0'},
+  ].map(({k,v,d,label,unit,ref})=>{
+    const s=getStatus(k,v);
+    return `<div class="kpi ${s}"><div class="label">${label}</div><div class="value ${s}">${fmt(v,d)}</div><div class="unit">${unit}</div><div class="ref">${ref}</div></div>`;
+  }).join('');
+
+  // Charts
+  buildDashCharts();
+  refreshDashboardDose();
+}
+
+function refreshDashboardDose(){
+  const el = document.getElementById('dash-dose-hero');
+  if(state.lastCalcResult){
+    const r = state.lastCalcResult;
+    const badge = r.direction==='down'?'badge-down':r.direction==='up'?'badge-up':'badge-keep';
+    el.innerHTML=`<div class="dose-hero">
+      <div class="direction-badge ${badge}">${r.direction==='down'?'📉 Reducir':r.direction==='up'?'📈 Aumentar':'✅ Mantener'}</div>
+      <div class="daily-label">Dosis diaria sugerida</div>
+      <div class="daily-value">${r1(r.calcDose)}</div>
+      <div class="daily-unit">mcg / día · Eutirox ${r.commercial} mcg</div>
+      <div class="dose-freq">
+        <div class="freq-card"><div class="fl">Semanal</div><div class="fv">${r.calcWeekly}</div><div class="fu">mcg/semana</div></div>
+        <div class="freq-card"><div class="fl">Mensual</div><div class="fv">${r.calcMonthly}</div><div class="fu">mcg/mes</div></div>
+      </div>
+    </div>`;
+  }
+}
+
+function buildDashCharts(){
+  const sorted = [...state.exams].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const labels = sorted.map(e=>new Date(e.date+'T12:00:00').toLocaleDateString('es-CL',{month:'short',year:'2-digit'}));
+  const chartDef = (id,data,color,label,min,max,optLo,optHi)=>{
+    if(charts[id]) charts[id].destroy();
+    const ctx = document.getElementById(id); if(!ctx) return;
+    charts[id] = new Chart(ctx,{
+      type:'line',
+      data:{labels,datasets:[
+        {label,data,borderColor:color,backgroundColor:color+'22',borderWidth:2.5,pointRadius:5,pointBackgroundColor:color,tension:0.3,fill:true},
+        {label:'Óptimo mín',data:sorted.map(()=>optLo),borderColor:'rgba(34,197,94,.4)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
+        {label:'Óptimo máx',data:sorted.map(()=>optHi),borderColor:'rgba(34,197,94,.4)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c2d40',titleColor:'#e2eaf4',bodyColor:'#8fa3bc'}},
+        scales:{x:{grid:{color:'rgba(42,61,85,.5)'},ticks:{color:'#5a7390',font:{size:10}}},
+                y:{min,max,grid:{color:'rgba(42,61,85,.5)'},ticks:{color:'#5a7390',font:{size:10}}}}}
+    });
+  };
+  const tshVals  = sorted.map(e=>e.tsh);
+  const atpoVals = sorted.map(e=>e.antiTPO);
+  const hdlVals  = sorted.map(e=>e.hdl);
+  const tgVals   = sorted.map(e=>e.tg);
+
+  chartDef('dash-tsh-chart',tshVals,'#14b8a6','TSH',0,5,1.0,2.5);
+  chartDef('dash-antitpo-chart',atpoVals,'#ef4444','Anti-TPO',0,null,0,34);
+
+  if(charts['dash-lipid-chart']) charts['dash-lipid-chart'].destroy();
+  const ctx2=document.getElementById('dash-lipid-chart'); if(!ctx2) return;
+  charts['dash-lipid-chart']=new Chart(ctx2,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'HDL',data:hdlVals,borderColor:'#22c55e',borderWidth:2,pointRadius:4,tension:0.3,fill:false},
+      {label:'TG',data:tgVals,borderColor:'#f97316',borderWidth:2,pointRadius:4,tension:0.3,fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#8fa3bc',font:{size:10},boxWidth:12}}},
+      scales:{x:{grid:{color:'rgba(42,61,85,.5)'},ticks:{color:'#5a7390',font:{size:10}}},
+              y:{grid:{color:'rgba(42,61,85,.5)'},ticks:{color:'#5a7390',font:{size:10}}}}}
+  });
+}
+
+// ════════════════════════════════════════
+//  HISTORY
+// ════════════════════════════════════════
+function refreshHistory(){
+  const sorted=[...state.exams].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const labels=sorted.map(e=>new Date(e.date+'T12:00:00').toLocaleDateString('es-CL',{month:'short',year:'2-digit'}));
+
+  const mkChart=(id,data,color,optLo,optHi)=>{
+    if(charts[id]) charts[id].destroy();
+    const ctx=document.getElementById(id); if(!ctx) return;
+    charts[id]=new Chart(ctx,{
+      type:'line',data:{labels,datasets:[
+        {data,borderColor:color,backgroundColor:color+'20',borderWidth:2.5,pointRadius:5,pointBackgroundColor:color,tension:0.3,fill:true},
+        ...(optLo!=null?[{data:sorted.map(()=>optLo),borderColor:'rgba(34,197,94,.4)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false}]:[]),
+        ...(optHi!=null?[{data:sorted.map(()=>optHi),borderColor:'rgba(34,197,94,.4)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false}]:[]),
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{grid:{color:'rgba(42,61,85,.5)'},ticks:{color:'#5a7390',font:{size:10}}},
+                y:{grid:{color:'rgba(42,61,85,.5)'},ticks:{color:'#5a7390',font:{size:10}}}}}
+    });
+  };
+  mkChart('hist-tsh',sorted.map(e=>e.tsh),'#14b8a6',1.0,2.5);
+  mkChart('hist-ft4',sorted.map(e=>e.ft4),'#a855f7',1.0,1.4);
+  mkChart('hist-antitpo',sorted.map(e=>e.antiTPO),'#ef4444',null,34);
+  mkChart('hist-vitd',sorted.map(e=>e.vitD),'#fbbf24',40,60);
+
+  const tbody=document.getElementById('hist-table-body');
+  tbody.innerHTML=[...state.exams].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(e=>{
+    const st=s=>getStatus(s,e[s]);
+    return`<tr class="hist-row" onclick="showExamDetail('${e.id}')">
+      <td><strong>${new Date(e.date+'T12:00:00').toLocaleDateString('es-CL')}</strong><br><small style="color:var(--text3)">${e.label||''}</small></td>
+      <td><span class="val-${st('tsh')}">${fmt(e.tsh,3)}</span></td>
+      <td><span class="val-${st('ft4')}">${fmt(e.ft4,2)}</span></td>
+      <td><span class="val-${st('ft3')}">${fmt(e.ft3,2)}</span></td>
+      <td><span class="val-${st('antiTPO')}">${fmt(e.antiTPO,1)}</span></td>
+      <td><span class="val-${st('vitD')}">${fmt(e.vitD,1)}</span></td>
+      <td><span class="val-${st('b12')}">${fmt(e.b12,0)}</span></td>
+      <td>${e.dose?`${e.dose} mcg`:'<span style="color:var(--text3)">—</span>'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteExam('${e.id}')">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function showExamDetail(id){
+  const e=state.exams.find(x=>x.id===id); if(!e) return;
+  const row=(label,key,d=2)=>{
+    const v=e[key]; const s=getStatus(key,v);
+    return`<tr><td>${label}</td><td><span class="val-${s}">${fmt(v,d)}</span></td><td style="font-size:11px;color:var(--text3)">${OPTIMAL[key]?`Óptimo: ${OPTIMAL[key].lo||0}–${OPTIMAL[key].hi} ${OPTIMAL[key].unit}`:''}</td></tr>`;
+  };
+  document.getElementById('modal-body').innerHTML=`
+    <h3>📋 ${e.label||'Examen'} · ${new Date(e.date+'T12:00:00').toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'})}</h3>
+    ${e.dose?`<div class="kpi info" style="margin-bottom:16px"><div class="label">Dosis Eutirox ese día</div><div class="value info">${e.dose}</div><div class="unit">mcg/día</div></div>`:''}
+    <table class="lab-table" style="width:100%">
+      <thead><tr><th>Parámetro</th><th>Resultado</th><th>Referencia óptima</th></tr></thead>
+      <tbody>
+        ${row('TSH','tsh',3)}${row('FT4','ft4',2)}${row('FT3','ft3',2)}
+        ${row('Anti-TPO','antiTPO',1)}${row('Vitamina D','vitD',1)}${row('B12','b12',0)}
+        ${row('Insulina','insulin',1)}${row('Glucosa','glucose',0)}
+        ${row('HDL','hdl',0)}${row('Triglicéridos','tg',0)}${row('PCR','pcr',2)}
+      </tbody>
+    </table>`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function deleteExam(id){
+  if(confirm('¿Eliminar este examen?')){
+    state.exams=state.exams.filter(e=>e.id!==id); saveState(); refreshHistory(); toast('Examen eliminado','info');
+  }
+}
+
+// ════════════════════════════════════════
+//  FILE UPLOAD & PARSING
+// ════════════════════════════════════════
+const dropZone=()=>document.getElementById('drop-zone');
+
+function setupDragDrop(){
+  const dz=dropZone(); if(!dz) return;
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault(); dz.classList.remove('drag');
+    const f=e.dataTransfer.files[0]; if(f) parseAndFillFile(f);
+  });
+}
+
+function handleFile(input){
+  const f=input.files[0]; if(!f) return;
+  parseAndFillFile(f);
+}
+
+function parseAndFillFile(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  const reader=new FileReader();
+  if(ext==='csv'){
+    reader.onload=e=>parseText(e.target.result,file.name);
+    reader.readAsText(file);
+  } else if(ext==='pdf'){
+    reader.onload=e=>parsePDFBuffer(e.target.result,file.name);
+    reader.readAsArrayBuffer(file);
+  } else {
+    toast('Solo se admite PDF o CSV por ahora. Rellena manualmente.','info');
+  }
+}
+
+function parseText(text,fname){
+  const patterns={
+    tsh:/TSH[^0-9]*([0-9]+[.,][0-9]+)/i,
+    ft4:/(?:FT4|Tiroxina Libre)[^0-9]*([0-9]+[.,][0-9]+)/i,
+    ft3:/(?:FT3|Triyodotironina Libre)[^0-9]*([0-9]+[.,][0-9]+)/i,
+    antiTPO:/(?:anti.?TPO|anti.?Peroxidasa)[^0-9]*([0-9]+[.,][0-9]+)/i,
+    vitD:/(?:25.OH|Vitamina D)[^0-9]*([0-9]+[.,][0-9]+)/i,
+    b12:/(?:Vitamina B12|B12)[^0-9]*([0-9]+)/i,
+    glucose:/Glucosa[^0-9]*([0-9]+)/i,
+    insulin:/Insulina[^0-9]*([0-9]+[.,][0-9]+)/i,
+    hdl:/(?:Colesterol HDL|HDL)[^0-9]*([0-9]+)/i,
+    tg:/Triglic[eé]ridos[^0-9]*([0-9]+)/i,
+    pcr:/Prote[ií]na C Reactiva[^0-9]*([0-9]+[.,][0-9]+)/i,
+    ferritin:/Ferritina[^0-9]*([0-9]+[.,]?[0-9]*)/i,
+    hba1c:/(?:HbA1c|Hemoglobina Glicosilada)[^0-9]*([0-9]+[.,][0-9]+)/i,
+  };
+  let found=0;
+  for(const [key,pattern] of Object.entries(patterns)){
+    const match=text.match(pattern);
+    if(match){
+      const val=parseFloat(match[1].replace(',','.'));
+      const el=document.getElementById('u-'+key.toLowerCase());
+      const elMap={tsh:'u-tsh',ft4:'u-ft4',ft3:'u-ft3',antiTPO:'u-antitpo',
+                   vitD:'u-vitd',b12:'u-b12',glucose:'u-gluc',insulin:'u-ins',
+                   hdl:'u-hdl',tg:'u-tg',pcr:'u-pcr',ferritin:'u-ferr',hba1c:'u-hba1c'};
+      const target=document.getElementById(elMap[key]);
+      if(target&&!isNaN(val)){target.value=val; found++;}
+    }
+  }
+  // Extract date
+  const dateMatch=text.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if(dateMatch){
+    try{
+      let y=dateMatch[3]; if(y.length===2) y='20'+y;
+      const d=String(dateMatch[1]).padStart(2,'0');
+      const m=String(dateMatch[2]).padStart(2,'0');
+      document.getElementById('u-date').value=`${y}-${m}-${d}`;
+    }catch{}
+  }
+  document.getElementById('parse-result').style.display='block';
+  toast(`Se detectaron ${found} valores automáticamente. Revisa y corrige si es necesario.`,'success');
+}
+
+async function parsePDFBuffer(buffer, fname){
+  // Try to use PDF.js if available, otherwise extract what we can
+  try{
+    // Simple fallback: try TextDecoder to get any readable text
+    const uint8 = new Uint8Array(buffer);
+    const text = new TextDecoder('latin1').decode(uint8);
+    parseText(text, fname);
+  }catch(e){
+    toast('No se pudo extraer texto del PDF. Completa los campos manualmente.','info');
+  }
+}
+
+function saveExam(){
+  const date=document.getElementById('u-date').value;
+  if(!date){toast('Ingresa la fecha del examen','error'); return;}
+
+  const g=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;};
+  const exam={
+    id:'exam-'+Date.now(),
+    date, label:document.getElementById('u-label').value||'Examen manual',
+    dose:g('u-dose'),
+    tsh:g('u-tsh'),ft4:g('u-ft4'),ft3:g('u-ft3'),antiTPO:g('u-antitpo'),antiTG:g('u-anttg'),
+    vitD:g('u-vitd'),b12:g('u-b12'),ferritin:g('u-ferr'),folate:g('u-folate'),
+    glucose:g('u-gluc'),insulin:g('u-ins'),hba1c:g('u-hba1c'),pcr:g('u-pcr'),
+    cholTotal:g('u-chol'),hdl:g('u-hdl'),ldl:g('u-ldl'),tg:g('u-tg'),
+  };
+  state.exams.push(exam); saveState();
+  // Clear form
+  ['u-date','u-label','u-dose','u-tsh','u-ft4','u-ft3','u-antitpo','u-anttg',
+   'u-vitd','u-b12','u-ferr','u-folate','u-gluc','u-ins','u-hba1c','u-pcr',
+   'u-chol','u-hdl','u-ldl','u-tg'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  toast('Examen guardado en el historial','success');
+}
+
+// ════════════════════════════════════════
+//  SUPPLEMENTS PAGE
+// ════════════════════════════════════════
+function refreshSupplements(){
+  const ex=getLatestExam();
+  const alertBox=document.getElementById('supp-alerts'); if(!alertBox) return;
+  let alerts=[];
+  if(ex){
+    if(ex.vitD&&ex.vitD<20) alerts.push(`<div class="clin-alert bad"><div class="ai">⚠️</div><div><h4 class="bad">Vitamina D crítica: ${ex.vitD} ng/mL</h4><p>Bajo el límite del laboratorio. Iniciar suplementación inmediatamente (2000–4000 UI/día D3).</p></div></div>`);
+    if(ex.antiTPO&&ex.antiTPO>100) alerts.push(`<div class="clin-alert bad"><div class="ai">🛡️</div><div><h4 class="bad">Anti-TPO muy elevado: ${ex.antiTPO} UI/mL</h4><p>Selenio 200 mcg/día (selenometionina) es la intervención más respaldada para reducirlo. Mínimo 3–6 meses.</p></div></div>`);
+    if(ex.b12&&ex.b12>771) alerts.push(`<div class="clin-alert warn"><div class="ai">⛔</div><div><h4 class="warn">B12 elevada: ${ex.b12} pg/mL</h4><p>Suspender o reducir suplemento actual. No iniciar nueva suplementación de B12.</p></div></div>`);
+  }
+  alertBox.innerHTML=alerts.join('');
+
+  // Purchase list
+  const pl=document.getElementById('purchase-list'); if(!pl) return;
+  const items=[
+    {name:'Selenio',detail:'Selenometionina 200 mcg · 1 cápsula/día con almuerzo',when:'Almuerzo'},
+    {name:'Vitamina D3',detail:'Colecalciferol 2000–4000 UI · 1 cápsula/día con desayuno',when:'Desayuno'},
+    {name:'Vitamina K2',detail:'MK-7 100–200 mcg · 1 cápsula/día con desayuno',when:'Desayuno'},
+    {name:'Magnesio Glicinato',detail:'300–400 mg · 1 cápsula antes de dormir',when:'Noche'},
+    {name:'Omega-3',detail:'EPA+DHA 1–2 g/día · con almuerzo o cena',when:'Almuerzo/Cena'},
+    {name:'Probiótico',detail:'Lactobacillus + Bifidobacterium · 1 cápsula en ayunas',when:'Ayunas'},
+  ];
+  pl.innerHTML=items.map((item,i)=>`
+    <div class="purchase-item">
+      <div class="pi-check" id="pi-check-${i}" onclick="toggleCheck(${i})"></div>
+      <div class="pi-info"><div class="pi-name">${item.name}</div><div class="pi-detail">${item.detail}</div></div>
+      <div class="pi-when">${item.when}</div>
+    </div>`).join('');
+}
+
+function toggleCheck(i){
+  const el=document.getElementById(`pi-check-${i}`);
+  el.classList.toggle('checked');
+  if(el.classList.contains('checked')) el.textContent='✓';
+  else el.textContent='';
+}
+
+// ════════════════════════════════════════
+//  PDF EXPORT
+// ════════════════════════════════════════
+function initPDFPage(){
+  if(!document.getElementById('pdf-date').value){
+    document.getElementById('pdf-date').value=new Date().toISOString().split('T')[0];
+  }
+}
+
+function exportPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210, M=18, CW=W-M*2;
+  let y=M;
+
+  const nc=(str)=>str||'—';
+  const fmtD=(d,dec=2)=>d==null?'—':Number(d).toFixed(dec);
+
+  // Colors
+  const TEAL=[20,184,166], DARK=[21,32,48], GRAY=[139,163,188], LIGHT=[226,234,244];
+  const RED=[239,68,68], YELLOW=[245,158,11], GREEN=[34,197,94];
+
+  const hLine=()=>{doc.setDrawColor(...GRAY);doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=4;};
+  const sectionTitle=(title)=>{
+    doc.setFillColor(...DARK); doc.rect(M,y,CW,9,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...LIGHT);
+    doc.text(title,M+4,y+6); y+=14;
+    doc.setTextColor(0,0,0);
+  };
+  const row2=(l,v,c)=>{
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...GRAY);
+    doc.text(l,M,y);
+    doc.setFont('helvetica','bold'); doc.setTextColor(...(c||DARK));
+    doc.text(v,M+80,y); y+=6;
+    doc.setTextColor(0,0,0);
+  };
+  const para=(text,indent=0)=>{
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(80,80,80);
+    const lines=doc.splitTextToSize(text,CW-indent);
+    lines.forEach(l=>{doc.text(l,M+indent,y); y+=5;});
+    doc.setTextColor(0,0,0);
+  };
+  const checkPage=()=>{if(y>270){doc.addPage();y=M;}};
+
+  // ── HEADER ──
+  doc.setFillColor(...TEAL); doc.rect(0,0,W,32,'F');
+  doc.setFillColor(...DARK); doc.rect(0,28,W,4,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(255,255,255);
+  doc.text('Plan Clínico Eutirox',M,16);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text('Tiroiditis de Hashimoto · Seguimiento y Recomendaciones',M,23);
+  y=40;
+
+  // Patient info
+  const pname=document.getElementById('pdf-name').value;
+  const pdoc =document.getElementById('pdf-doctor').value;
+  const pdate=document.getElementById('pdf-date').value;
+  const pnotes=document.getElementById('pdf-notes').value;
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...DARK);
+  doc.text(pname,M,y); y+=6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...GRAY);
+  doc.text(`Médico: ${pdoc} · Fecha del plan: ${pdate} · F.Nac: 28/12/1987`,M,y); y+=5;
+  if(pnotes){doc.text(`Notas: ${pnotes}`,M,y); y+=5;}
+  y+=4; hLine();
+
+  // ── EXAMS ──
+  if(document.getElementById('pdf-inc-exams').checked){
+    const ex=getLatestExam();
+    sectionTitle('📋 Resumen de Exámenes Actuales');
+    if(ex){
+      doc.setFontSize(8.5);
+      row2('TSH (uUI/mL)',fmtD(ex.tsh,3),[...ex.tsh<0.27?RED:ex.tsh>2.5?YELLOW:GREEN]);
+      row2('FT4 Libre (ng/dL)',fmtD(ex.ft4,2),[...ex.ft4>1.70?RED:ex.ft4>1.4?YELLOW:GREEN]);
+      row2('FT3 Libre (pg/mL)',fmtD(ex.ft3,2),DARK);
+      row2('Anti-TPO (UI/mL)',fmtD(ex.antiTPO,1),[...ex.antiTPO>34?RED:DARK]);
+      row2('Vitamina D (ng/mL)',fmtD(ex.vitD,1),[...ex.vitD<20?RED:ex.vitD<40?YELLOW:GREEN]);
+      row2('B12 (pg/mL)',fmtD(ex.b12,0),[...ex.b12>771?YELLOW:GREEN]);
+      row2('Insulina (uUI/mL)',fmtD(ex.insulin,1),[...ex.insulin>10?YELLOW:GREEN]);
+      row2('PCR (mg/L)',fmtD(ex.pcr,2),[...ex.pcr>1.0?RED:GREEN]);
+      row2('Glucosa (mg/dL)',fmtD(ex.glucose,0),DARK);
+      row2('Colesterol HDL (mg/dL)',fmtD(ex.hdl,0),[...ex.hdl<60?YELLOW:GREEN]);
+      row2('Triglicéridos (mg/dL)',fmtD(ex.tg,0),[...ex.tg>150?YELLOW:GREEN]);
+    }
+    checkPage(); hLine();
+  }
+
+  // ── DOSE ──
+  if(document.getElementById('pdf-inc-dose').checked){
+    checkPage();
+    sectionTitle('💊 Dosis Sugerida de Eutirox');
+    if(state.lastCalcResult){
+      const r=state.lastCalcResult;
+      doc.setFillColor(...TEAL); doc.rect(M,y,CW,16,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(255,255,255);
+      doc.text(`${r1(r.calcDose)} mcg/día`,M+4,y+12); y+=20;
+      doc.setTextColor(...DARK);
+      row2('Presentación comercial',`Eutirox ${r.commercial} mcg`,TEAL);
+      row2('Dosis semanal',`${r.calcWeekly} mcg/semana`,DARK);
+      row2('Dosis mensual',`${r.calcMonthly} mcg/30 días`,DARK);
+      row2('Recomendación',r.direction==='down'?'REDUCIR DOSIS':r.direction==='up'?'AUMENTAR DOSIS':'MANTENER DOSIS',
+        r.direction==='down'?RED:r.direction==='up'?YELLOW:GREEN);
+      y+=3;
+      const dirMsg=r.direction==='down'?'TSH suprimido y/o FT4 elevado: señal de sobredosificación. Reducción gradual al escalón inferior. NO suspender tratamiento.':
+                   r.direction==='up'?'TSH elevado: subdosificación. Incrementar al escalón superior de forma gradual.':
+                   'TSH en rango óptimo. Mantener dosis actual. Control en 3–6 meses.';
+      para(dirMsg);
+    } else {
+      para('No se ha ejecutado el cálculo de dosis. Ve a la sección Calculadora e ingresa los datos.');
+    }
+    checkPage(); hLine();
+  }
+
+  // ── SUPPLEMENTS ──
+  if(document.getElementById('pdf-inc-supps').checked){
+    checkPage();
+    sectionTitle('🧪 Suplementos Recomendados');
+    const supps=[
+      {name:'Selenio (Selenometionina)',dose:'200 mcg/día',when:'Almuerzo con comida',avoid:'No con Vit C alta · Sep. 4h del Eutirox',goal:'Reducir Anti-TPO'},
+      {name:'Vitamina D3 (Colecalciferol)',dose:'2000–4000 UI/día',when:'Desayuno con grasa',avoid:'No en ayunas · Sep. 4h del Eutirox',goal:'Llegar a 40–60 ng/mL'},
+      {name:'Vitamina K2 (MK-7)',dose:'100–200 mcg/día',when:'Desayuno junto a D3',avoid:'Cuidado con anticoagulantes',goal:'Dirige calcio a huesos'},
+      {name:'Magnesio Glicinato',dose:'300–400 mg/día',when:'Por la noche antes de dormir',avoid:'No con Eutirox · Sep. 4h del Eutirox',goal:'Activa Vit D / sueño'},
+      {name:'Omega-3 EPA+DHA',dose:'1–2 g/día',when:'Almuerzo o cena con comida',avoid:'No en ayunas · Precaución anticoagulantes',goal:'Antiinflamatorio / perfil lipídico'},
+      {name:'B12 — REDUCIR/SUSPENDER',dose:'Suspender suplemento actual',when:'—',avoid:'No iniciar nueva suplementación',goal:'B12 ya en 956 pg/mL (sobre rango)'},
+    ];
+    supps.forEach(s=>{
+      checkPage();
+      doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...TEAL);
+      doc.text(s.name,M,y); y+=5;
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(80,80,80);
+      doc.text(`Dosis: ${s.dose}  |  Horario: ${s.when}`,M+4,y); y+=5;
+      doc.text(`Objetivo: ${s.goal}`,M+4,y); y+=4;
+      doc.text(`Evitar: ${s.avoid}`,M+4,y); y+=7;
+    });
+    checkPage(); hLine();
+  }
+
+  // ── PURCHASE LIST ──
+  if(document.getElementById('pdf-inc-purchase').checked){
+    checkPage();
+    sectionTitle('🛒 Lista de Compra en Farmacia');
+    [
+      ['Selenio','Selenometionina 200 mcg (cápsulas)','Almuerzo'],
+      ['Vitamina D3','Colecalciferol 2000 o 4000 UI (cápsulas)','Desayuno'],
+      ['Vitamina K2','MK-7 100–200 mcg (cápsulas)','Desayuno'],
+      ['Magnesio','Glicinato 300–400 mg (cápsulas)','Noche'],
+      ['Omega-3','EPA+DHA 1000 mg (cápsulas blandas)','Almuerzo/Cena'],
+      ['Probiótico','Lactobacillus + Bifidobacterium (cápsulas)','Ayunas'],
+    ].forEach(([name,form,time])=>{
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
+      doc.text(`□  ${name}`,M,y);
+      doc.setFont('helvetica','normal'); doc.setTextColor(...GRAY);
+      doc.text(form,M+30,y);
+      doc.text(time,W-M-20,y); y+=6;
+    });
+    checkPage(); hLine();
+  }
+
+  // ── FOOD ──
+  if(document.getElementById('pdf-inc-food').checked){
+    checkPage();
+    sectionTitle('🥗 Recomendaciones de Alimentación');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...RED);
+    doc.text('REDUCIR O ELIMINAR:',M,y); y+=5;
+    ['Gluten (trigo, cebada, centeno) — prueba 6 meses eliminación total',
+     'Azúcar refinada y ultraprocesados — HOMA-IR 3.23 indicador temprano de RI',
+     'Soya y derivados — inhibe absorción Eutirox y función tiroidea',
+     'Lácteos convencionales (caseína A1) — efecto inflamatorio',
+     'Alcohol — aumenta permeabilidad intestinal'].forEach(t=>{checkPage();para('• '+t,4);});
+    y+=3; checkPage();
+    doc.setFont('helvetica','bold'); doc.setTextColor(...GREEN);
+    doc.text('PRIORIZAR:',M,y); y+=5;
+    ['Pescado azul 2–3x/semana (salmón, sardinas)',
+     'Verduras crucíferas COCIDAS (brócoli, coliflor, kale)',
+     'Frutas de bajo IG (berries, manzana, pera)',
+     'Huevo entero — fuente de selenio natural',
+     'Cúrcuma + pimienta negra — antiinflamatorio',
+     'Aceite de oliva extra virgen como grasa principal',
+     '2–3 nueces de Brasil al día (selenio natural)'].forEach(t=>{checkPage();para('• '+t,4);});
+    checkPage(); hLine();
+  }
+
+  // ── SCHEDULE ──
+  if(document.getElementById('pdf-inc-schedule').checked){
+    checkPage();
+    sectionTitle('⏰ Horario Diario de Toma');
+    [['06:30','Eutirox + 200 mL agua sola (ayunas)'],
+     ['07:30','Desayuno + Vitamina D3 + Omega-3'],
+     ['08:30','Ejercicio (si corresponde)'],
+     ['13:00','Almuerzo + Selenio 200 mcg'],
+     ['19:00','Cena liviana sin gluten'],
+     ['21:00','Magnesio Glicinato 300–400 mg + 200 mL agua'],
+    ].forEach(([time,text])=>{
+      checkPage();
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...TEAL);
+      doc.text(time,M,y);
+      doc.setFont('helvetica','normal'); doc.setTextColor(...DARK);
+      doc.text(text,M+22,y); y+=6;
+    });
+    y+=3; checkPage();
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
+    doc.text('Meta diaria de agua: 2.0–2.5 L totales',M,y); y+=10;
+    checkPage(); hLine();
+  }
+
+  // ── EXERCISE ──
+  if(document.getElementById('pdf-inc-exercise').checked){
+    checkPage();
+    sectionTitle('🏃 Rutina de Ejercicios');
+    [['Lunes / Jueves','Fuerza con pesas livianas','35–45 min','Moderada'],
+     ['Martes','Caminata activa al aire libre','30–40 min','Baja-Moderada'],
+     ['Viernes','Cardio moderado (bicicleta/elíptica/nadar)','30–40 min','Moderada'],
+     ['Miércoles / Sábado','Yoga / Movilidad / Respiración','20–30 min','Baja'],
+     ['Domingo','Descanso completo','—','—'],
+    ].forEach(([day,type,dur,int])=>{
+      checkPage();
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...TEAL);
+      doc.text(day,M,y);
+      doc.setFont('helvetica','normal'); doc.setTextColor(...DARK);
+      doc.text(`${type} · ${dur} · Intensidad: ${int}`,M+45,y); y+=6;
+    });
+    y+=3;
+    para('PRINCIPIO CLAVE: En Hashimoto el exceso de entrenamiento eleva el cortisol y puede aumentar anticuerpos. Consistencia moderada > intensidad máxima.',4);
+    checkPage(); hLine();
+  }
+
+  // ── DISCLAIMER ──
+  checkPage();
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...YELLOW);
+  doc.text('⚕️ AVISO MÉDICO:',M,y); y+=5;
+  doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+  para('Este plan es de apoyo clínico generado a partir de los datos ingresados. No reemplaza la evaluación médica presencial. Los ajustes de dosis de Eutirox deben ser graduales y siempre supervisados por el endocrinólogo tratante.');
+
+  // Footer on all pages
+  const totalPages = doc.internal.getNumberOfPages();
+  for(let p=1;p<=totalPages;p++){
+    doc.setPage(p);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...GRAY);
+    doc.text(`${pname} · Plan Eutirox / Hashimoto · ${pdate}`,M,295);
+    doc.text(`Página ${p} / ${totalPages}`,W-M,295,{align:'right'});
+  }
+
+  doc.save(`plan_eutirox_${pdate||'2026'}.pdf`);
+  toast('PDF generado y descargado','success');
+}
+
+// ════════════════════════════════════════
+//  MODAL
+// ════════════════════════════════════════
+function closeModal(e){
+  if(!e||e.target.id==='modal-overlay') document.getElementById('modal-overlay').classList.remove('show');
+}
+
+// ════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════
+function toast(msg, type='info'){
+  const c=document.getElementById('toast-container');
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  const ico=type==='success'?'✅':type==='error'?'❌':'ℹ️';
+  el.innerHTML=`<span>${ico}</span><span>${msg}</span>`;
+  c.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(20px)';el.style.transition='.3s';setTimeout(()=>el.remove(),350);},3000);
+}
+
+// ════════════════════════════════════════
+//  REFRESH ALL
+// ════════════════════════════════════════
+function refreshAll(){
+  refreshDashboard();
+  refreshHistory();
+  refreshSupplements();
+  updateStorageStatus();
+}
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  loadState();
+  setupDragDrop();
+  refreshAll();
+  // Keyboard: ESC closes modal
+  document.addEventListener('keydown',e=>{if(e.key==='Escape') closeModal({target:{id:'modal-overlay'}});});
+  // Refresh supplements tab when shown
+  document.querySelector('[onclick="showPage(\'supplements\')"]').addEventListener('click',refreshSupplements);
+});
+</script>
+
+<!-- ══ PWA Service Worker + Update Banner ══ -->
+<div id="sw-update-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;
+  background:#14b8a6;color:#0e1620;padding:12px 20px;font-size:13px;font-weight:600;
+  align-items:center;justify-content:space-between;gap:16px;box-shadow:0 -4px 20px rgba(0,0,0,.4)">
+  <span>🔄 Nueva versión disponible</span>
+  <button onclick="reloadSW()" style="background:#0e1620;color:#14b8a6;border:none;border-radius:6px;
+    padding:6px 16px;cursor:pointer;font-weight:700;font-size:12px">Actualizar ahora</button>
+</div>
+
+<script>
+// ── Service Worker ──
+let swReg = null;
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      swReg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+      console.log('[App] SW:', swReg.scope);
+      swReg.addEventListener('updatefound', () => {
+        const nw = swReg.installing;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            document.getElementById('sw-update-bar').style.display = 'flex';
+          }
+        });
+      });
+      setInterval(() => swReg.update(), 30 * 60 * 1000);
+    } catch (err) { console.warn('[App] SW failed:', err); }
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+}
+function reloadSW() {
+  if (swReg && swReg.waiting) swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+  else window.location.reload();
+}
+
+// ── Hash routing para shortcuts del manifest ──
+function handleHash() {
+  const h = location.hash.replace('#','');
+  const valid = ['dashboard','calc','history','upload','supplements','nutrition','schedule','exercise','pdf','data'];
+  if (valid.includes(h)) { if (typeof showPage === 'function') showPage(h); }
+}
+window.addEventListener('hashchange', handleHash);
+window.addEventListener('load', () => setTimeout(handleHash, 200));
+
+// ── Install prompt ──
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  const b = document.getElementById('install-btn');
+  if (b) b.style.display = 'flex';
+});
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  const b = document.getElementById('install-btn'); if (b) b.style.display = 'none';
+  if (typeof toast === 'function') toast('App instalada correctamente 🎉','success');
+});
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(c => {
+    if (c.outcome==='accepted' && typeof toast==='function') toast('Instalando...','info');
+    deferredPrompt = null;
+  });
+}
+</script>
 </body>
 </html>
