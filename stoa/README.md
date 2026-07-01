@@ -1,4 +1,4 @@
-# Stoa Nocturna — versión para publicar (PWA)
+# Stoa Nocturna v2 — versión para publicar (PWA)
 
 Esta es la versión "hospedable" de Stoa: ya no usa el ícono incrustado, sino
 archivos reales, y trae **service worker** para que cargue al instante y funcione
