@@ -331,6 +331,35 @@ body.deep .lesson-title{ margin-bottom:14px; }
 @media (min-width:560px){
   .virtue-grid{ grid-template-columns:repeat(4,1fr); }
 }
+/* ---- v2: recompensas, pregunta personal, desafío, Mi Stoa ---- */
+.btn.mini{ padding:8px 14px; font-size:0.82rem; margin-top:10px; }
+.btn.done{ opacity:0.65; }
+.row-mini{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.mini-note{ color:#9C8E74; font-size:0.8rem; }
+.lead-min{ color:#F5EFDD; margin:0 0 4px; }
+.personal textarea, .challenge textarea{ width:100%; min-height:72px; background:#251F16; color:#E9E0C8;
+  border:1px solid #33291b; border-radius:12px; padding:10px; font-size:16px; margin:6px 0; resize:vertical;
+  -webkit-user-select:text; user-select:text; font-family:var(--serif-body,Georgia,serif); }
+.challenge{ border:1px solid #33291b; background:#1E1913; border-radius:14px; padding:14px 16px; margin-top:16px; }
+.challenge h3{ color:#C8A24B; margin:0 0 .4em; }
+.mistoa{ background:#1E1913; border:1px solid #2c2418; border-radius:14px; padding:6px 14px; }
+.ms-row{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #241d13; font-size:0.95rem; }
+.ms-row:last-child{ border-bottom:none; }
+.ms-l{ color:#9C8E74; min-width:128px; font-size:0.85rem; }
+.ms-i{ flex:1; letter-spacing:2px; color:#E9E0C8; }
+.ms-c{ color:#9C8E74; font-size:0.72rem; white-space:nowrap; }
+.terms{ border:1px solid #33291b; background:#1E1913; border-radius:14px; padding:14px 16px; margin-top:16px; }
+.terms h3{ color:#C8A24B; margin:0 0 .3em; }
+.terms-intro{ color:#9C8E74; font-size:0.85rem; margin:0 0 10px; }
+.term{ padding:9px 0; border-bottom:1px solid #241d13; }
+.term:last-child{ border-bottom:none; }
+.t-head{ margin-bottom:2px; }
+.t-word{ color:#F5EFDD; font-family:Georgia,serif; font-style:italic; font-size:1.02rem; }
+.t-lee{ color:#9C8E74; font-size:0.8rem; }
+.t-def{ color:#E9E0C8; font-size:0.9rem; margin:2px 0; }
+.t-uso{ color:#E9E0C8; font-size:0.88rem; }
+.t-uso b{ color:#C8A24B; font-weight:600; }
+.t-src{ color:#9C8E74; font-size:0.72rem; margin-top:3px; }
 </style>
 </head>
 <body>
@@ -416,12 +445,15 @@ const RUTAS = [
 
 /* Rangos (RPG sobrio) — umbral de XP */
 const RANGOS = [
-  { nombre:"Aprendiz de la Stoa", xp:0 },
-  { nombre:"Caminante",           xp:50 },
-  { nombre:"Discípulo",           xp:150 },
-  { nombre:"Guardián",            xp:300 },
-  { nombre:"Consejero",           xp:500 },
-  { nombre:"Sabio en práctica",   xp:800 }
+  { nombre:"Aprendiz de la Stoa",  xp:0 },
+  { nombre:"Caminante",            xp:50 },
+  { nombre:"Discípulo",            xp:150 },
+  { nombre:"Guardián",             xp:300 },
+  { nombre:"Consejero",            xp:500 },
+  { nombre:"Sabio en práctica",    xp:800 },
+  { nombre:"Custodio del Pórtico", xp:1200 },
+  { nombre:"Maestro de la Noche",  xp:1800 },
+  { nombre:"Stoa Viva",            xp:2500 }
 ];
 
 /* Insignias */
@@ -430,7 +462,23 @@ const INSIGNIAS = [
   { id:"fundamentos",ico:"◆", nombre:"Fundamentos",    desc:"Completa la Ruta 1.",          test:s=>LECCIONES.filter(l=>l.ruta===1).every(l=>s.leidas.includes(l.dia)) },
   { id:"racha3",    ico:"≡",  nombre:"Tres noches",    desc:"Racha de 3 días.",             test:s=>s.rachaMax>=3 },
   { id:"racha7",    ico:"❖",  nombre:"Una semana",     desc:"Racha de 7 días.",             test:s=>s.rachaMax>=7 },
-  { id:"diarista",  ico:"✎",  nombre:"Diarista",       desc:"Escribe 3 entradas de diario.",test:s=>Object.keys(s.diario).length>=3 }
+  { id:"diarista",  ico:"✎",  nombre:"Diarista",       desc:"Escribe 3 entradas de diario.",test:s=>Object.keys(s.diario).length>=3 },
+  { id:"columna",   ico:"🏛", nombre:"Primera columna", desc:"5 lecturas completadas.",      test:s=>s.leidas.length>=5, prog:s=>[s.leidas.length,5] },
+  { id:"fuego",     ico:"🕯", nombre:"Fuego encendido", desc:"Primera práctica de 3 min.",   test:s=>Object.keys(s.rewards.practiceLessons).length>=1 },
+  { id:"pergamino", ico:"📜", nombre:"Primer pergamino",desc:"Primera reflexión personal.",  test:s=>Object.keys(s.personales).length>=1 },
+  { id:"profunda",  ico:"🌙", nombre:"Noche profunda",  desc:"Una lectura en Noche profunda.",test:s=>Object.keys(s.rewards.deepNight).length>=1 },
+  { id:"sietellamas",ico:"🔥",nombre:"Siete llamas",    desc:"Racha máxima de 7 días.",      test:s=>s.rachaMax>=7 },
+  { id:"aire",      ico:"🜁", nombre:"Aire limpio",     desc:"Responde 5 preguntas incómodas.",test:s=>Object.keys(s.rewards.uncomfortableQ).length>=5, prog:s=>[Object.keys(s.rewards.uncomfortableQ).length,5] },
+  { id:"justicia",  ico:"⚖", nombre:"Justicia practicada",desc:"3 lecciones de tema virtud.",test:s=>leidasConTema("virtud")>=3, prog:s=>[leidasConTema("virtud"),3] },
+  { id:"coraje",    ico:"🛡", nombre:"Coraje discreto",  desc:"3 lecciones de tema miedo.",   test:s=>leidasConTema("miedo")>=3, prog:s=>[leidasConTema("miedo"),3] },
+  { id:"brujula",   ico:"🧭", nombre:"Brújula interior", desc:"10 lecturas completadas.",     test:s=>s.leidas.length>=10, prog:s=>[s.leidas.length,10] },
+  { id:"templanza", ico:"🌿", nombre:"Templanza",        desc:"5 prácticas de 3 min.",        test:s=>Object.keys(s.rewards.practiceLessons).length>=5, prog:s=>[Object.keys(s.rewards.practiceLessons).length,5] },
+  { id:"noeramio",  ico:"🪨", nombre:"No era mío",        desc:"3 lecciones de tema control.", test:s=>leidasConTema("control")>=3, prog:s=>[leidasConTema("control"),3] },
+  { id:"honesta",   ico:"👁", nombre:"Mirada honesta",    desc:"Responde 10 preguntas personales.",test:s=>Object.keys(s.personales).length>=10, prog:s=>[Object.keys(s.personales).length,10] },
+  { id:"diarista10",ico:"📖", nombre:"Diarista nocturno", desc:"10 entradas de diario.",       test:s=>Object.keys(s.diario).length>=10, prog:s=>[Object.keys(s.diario).length,10] },
+  { id:"rutas3",    ico:"🏺", nombre:"Ruta iniciada",     desc:"Una lección en 3 rutas distintas.",test:s=>rutasIniciadas()>=3, prog:s=>[rutasIniciadas(),3] },
+  { id:"stoa30",    ico:"🏛️", nombre:"Stoa en pie",       desc:"30 lecturas completadas.",     test:s=>s.leidas.length>=30, prog:s=>[s.leidas.length,30] },
+  { id:"completo",  ico:"❖",  nombre:"Camino completo",   desc:"Completa las 90 lecciones.",   test:s=>s.leidas.length>=90, prog:s=>[s.leidas.length,90] }
 ];
 
 /* Desafíos de virtud */
@@ -2281,11 +2329,22 @@ const FICHAS = [
 const STORE_KEY = "stoaNocturna.v1";
 const XP_LECTURA = 20;
 const XP_DIARIO  = 10;
+const XP_MINI    = 5;
+const XP_DEEP    = 3;
+const XP_NOCHE   = 10;
 
 const estadoBase = {
   leidas:[],          // [dia,...]
   diario:{},          // { "YYYY-MM-DD": {q1:"",...} }
+  personales:{},      // { "YYYY-MM-DD": { dia, titulo, pregunta, respuesta } }
   xp:0,
+  xpByDate:{},        // { "YYYY-MM-DD": n }  (para exportar)
+  rewards:{           // llaves únicas anti-duplicado
+    readLessons:{}, readDates:{}, diaryDates:{},
+    reflectionQ:{}, uncomfortableQ:{}, personalQ:{},
+    practiceLessons:{}, practiceDates:{},
+    deepNight:{}, fullNight:{}, virtue:{}
+  },
   rachaActual:0,
   rachaMax:0,
   ultimaFecha:null,   // "YYYY-MM-DD"
@@ -2293,6 +2352,20 @@ const estadoBase = {
   nocheProfunda:false,
   filtroTema:null
 };
+
+// Normaliza/migra estados v1 antiguos: garantiza que existan los mapas nuevos
+// y marca como ya recompensadas las lecturas/diarios previos (para no re-premiar).
+function normalizar(s){
+  s.personales = s.personales || {};
+  s.xpByDate   = s.xpByDate   || {};
+  const rw = s.rewards = s.rewards || {};
+  ["readLessons","readDates","diaryDates","reflectionQ","uncomfortableQ",
+   "personalQ","practiceLessons","practiceDates","deepNight","fullNight","virtue"]
+   .forEach(k=>{ rw[k] = rw[k] || {}; });
+  (s.leidas||[]).forEach(d=>{ rw.readLessons[d] = true; });
+  Object.keys(s.diario||{}).forEach(f=>{ rw.diaryDates[f] = true; });
+  return s;
+}
 
 let usaMemoria = false;      // true si localStorage no está disponible o no persiste
 
@@ -2311,9 +2384,9 @@ let estado = cargar();
 function cargar(){
   try{
     const raw = localStorage.getItem(STORE_KEY);
-    if(raw) return Object.assign({}, estadoBase, JSON.parse(raw));
+    if(raw) return normalizar(Object.assign({}, estadoBase, JSON.parse(raw)));
   }catch(e){ usaMemoria = true; }
-  return Object.assign({}, estadoBase);
+  return normalizar(Object.assign({}, estadoBase));
 }
 function guardar(){
   if(usaMemoria) return;
@@ -2351,7 +2424,7 @@ function restaurarRespaldo(){
       try{
         const obj = JSON.parse(r.result);
         if(typeof obj !== "object" || obj === null) throw 0;
-        estado = Object.assign({}, estadoBase, obj);
+        estado = normalizar(Object.assign({}, estadoBase, obj));
         guardar();
         renderHoy(); renderCamino(); renderSello();
         document.body.classList.toggle("deep", !!estado.nocheProfunda);
@@ -2378,16 +2451,133 @@ function diffDias(a,b){
 function leccionPorDia(d){ return LECCIONES.find(l=>l.dia===d); }
 function leccionActual(){ return leccionPorDia(estado.diaActual) || LECCIONES[0]; }
 
+/* ---- Conteos para insignias / Mi Stoa ---- */
+function nPractica(){ return Object.keys(estado.rewards.practiceLessons).length; }
+function nPersonales(){ return Object.keys(estado.personales).length; }
+function nDiario(){ return Object.keys(estado.diario).length; }
+function leidasConTema(t){ return estado.leidas.filter(d=>{ const l=leccionPorDia(d); return l && l.temas.includes(t); }).length; }
+function rutasIniciadas(){ const s=new Set(); estado.leidas.forEach(d=>{ const l=leccionPorDia(d); if(l) s.add(l.ruta); }); return s.size; }
+
+/* ---- Recompensa con llave única (no permite farmear) ---- */
+function premiar(mapName, key, amount, label){
+  const rw = estado.rewards[mapName];
+  if(rw[key]) return false;         // ya entregada
+  rw[key] = true;
+  estado.xp += amount;
+  const h = hoyStr();
+  estado.xpByDate[h] = (estado.xpByDate[h]||0) + amount;
+  guardar();
+  if(label) toast("+"+amount+" XP · "+label);
+  renderSello();
+  return true;
+}
+
+/* ---- Bonus "Noche completa": lectura + diario + personal + práctica el mismo día ---- */
+function chequearNocheCompleta(){
+  const h = hoyStr(), rw = estado.rewards;
+  if(rw.fullNight[h]) return;
+  if(rw.readDates[h] && rw.diaryDates[h] && rw.personalQ[h] && rw.practiceDates[h]){
+    if(premiar("fullNight", h, XP_NOCHE, "Noche completa")){
+      toast("La constancia dejó otra marca en tu Stoa.");
+    }
+  }
+}
+
+/* ---- Pregunta personal derivada del tema (lógica local, sin IA) ---- */
+function preguntaPersonal(l){
+  const t = l.temas || [];
+  if(t.includes("control"))    return "¿Qué parte de este problema realmente te pertenece?";
+  if(t.includes("miedo"))      return "¿Qué miedo se agranda cuando lo dejas sin examinar?";
+  if(t.includes("familia"))    return "¿Dónde podrías ser más paciente con quienes amas?";
+  if(t.includes("liderazgo"))  return "¿Qué ejemplo estás dando cuando nadie te evalúa?";
+  if(t.includes("rabia"))      return "¿Qué juicio encendió tu rabia antes que la situación misma?";
+  if(t.includes("deseo"))      return "¿Qué deseo te gobierna hoy, en vez de servirte?";
+  if(t.includes("muerte"))     return "Si esta fuera de tus últimas noches, ¿cambiarías algo de hoy?";
+  if(t.includes("disciplina")) return "¿Qué pequeña cosa harías bien hoy, aunque nadie la vea?";
+  if(t.includes("virtud"))     return "¿En qué acto concreto de hoy se notó tu carácter?";
+  return "¿Qué parte de esta lección te incomodó porque se parece demasiado a ti?";
+}
+
+/* ---- Desafío de virtud derivado del tema ---- */
+function desafioVirtud(l){
+  const t = l.temas || [];
+  if(t.includes("control"))    return "Antes de dormir, nombra una cosa que no dependía de ti y déjala fuera de tu cama.";
+  if(t.includes("disciplina")) return "Ordena una cosa pequeña antes de dormir; no por productividad, sino por respeto a tu mente.";
+  if(t.includes("miedo"))      return "Escribe el miedo en una sola frase. Si necesita más de una página, probablemente lo estás alimentando.";
+  if(t.includes("familia"))    return "Piensa en alguien que amas sin exigirle que sea perfecto.";
+  if(t.includes("liderazgo"))  return "Mañana lidera una acción pequeña sin anunciarla.";
+  if(t.includes("rabia"))      return "No justifiques tu rabia todavía. Primero describe el juicio que la encendió.";
+  if(t.includes("virtud"))     return "Elige una acción correcta aunque nadie la vea.";
+  return "Haz una sola cosa esta noche que tu yo de mañana agradezca.";
+}
+
+/* ---- Términos estoicos reales por tema (con fuente). Sin invención. ---- */
+const TERMINOS = {
+  control: [
+    { t:"tà eph' hēmin", lee:"«lo que depende de nosotros»", def:"La frontera estoica: tus juicios, deseos y actos son tuyos; el resto, no.", uso:"Nombra qué parte del problema era tà eph' hēmin y qué parte no.", f:"Epicteto, Enquiridión 1" },
+    { t:"prohaíresis", lee:"«facultad de elección / albedrío»", def:"El núcleo que decide cómo respondes; nadie lo toca sin tu permiso.", uso:"Di qué eligió tu prohaíresis, más allá de lo que ocurrió.", f:"Epicteto, Disertaciones" },
+    { t:"synkatáthesis", lee:"«asentimiento»", def:"El sí o el no que le das a una impresión antes de que se vuelva emoción.", uso:"Señala dónde diste, o retiraste, tu asentimiento.", f:"estoicismo (Crisipo, Epicteto)" }
+  ],
+  disciplina: [
+    { t:"prosochḗ", lee:"«atención vigilante»", def:"Estar despierto a tus propios juicios en el momento, no en piloto automático.", uso:"Describe un momento en que aplicaste, o perdiste, la prosochḗ.", f:"estoicismo (Epicteto; destacado por P. Hadot)" },
+    { t:"áskēsis", lee:"«ejercicio, entrenamiento»", def:"La filosofía como práctica repetida, no como teoría.", uso:"Trata tu respuesta como un áskēsis: ¿qué ejercitaste hoy?", f:"estoicismo" }
+  ],
+  virtud: [
+    { t:"aretḗ", lee:"«virtud / excelencia»", def:"Para el estoico, el único bien verdadero: vivir conforme a la razón.", uso:"¿En qué acto concreto asomó tu aretḗ?", f:"estoicismo clásico" },
+    { t:"kathêkon", lee:"«acción apropiada / deber»", def:"Lo que corresponde hacer según tu rol y la naturaleza.", uso:"Nombra el kathêkon que la situación te pedía.", f:"Zenón/Crisipo (Diógenes Laercio, VII)" },
+    { t:"las 4 virtudes", lee:"phrónēsis · dikaiosýnē · andreía · sōphrosýnē", def:"Sabiduría práctica, justicia, coraje y templanza.", uso:"¿Cuál de las cuatro entró en juego hoy?", f:"estoicismo clásico" }
+  ],
+  miedo: [
+    { t:"premeditatio malorum", lee:"«premeditación de los males»", def:"Ensayar por adelantado lo que temes, para quitarle sorpresa y tamaño.", uso:"Aplícala a tu miedo: si pasara, ¿qué harías realmente?", f:"Séneca, Cartas a Lucilio" },
+    { t:"phantasía", lee:"«impresión»", def:"La imagen que llega antes del juicio; el miedo vive en cómo la interpretas.", uso:"Separa la phantasía (lo que viste) del juicio que le añadiste.", f:"estoicismo (Epicteto)" }
+  ],
+  muerte: [
+    { t:"meditatio mortis", lee:"«meditación sobre la muerte»", def:"Tener presente la propia mortalidad para vivir con más peso el hoy.", uso:"¿Qué cambia en tu día si lo miras desde esa consciencia?", f:"Séneca, Cartas a Lucilio (26, 70)" },
+    { t:"prohaíresis", lee:"«lo que sí es tuyo»", def:"La muerte no depende de ti; tu modo de vivir y encararla, sí.", uso:"Distingue lo que no controlas de lo que sí ante la finitud.", f:"Epicteto, Disertaciones" }
+  ],
+  familia: [
+    { t:"oikeíōsis", lee:"«apropiación / afinidad»", def:"La inclinación natural a cuidar de otros como parte de uno mismo.", uso:"¿Dónde se activó, o falló, tu oikeíōsis con los tuyos?", f:"Crisipo / Hierocles" },
+    { t:"círculos de Hierocles", lee:"«los círculos de afecto»", def:"Nos vemos en círculos concéntricos; la tarea es acercarlos al centro.", uso:"¿A quién de un círculo lejano podrías tratar como cercano?", f:"Hierocles, estoico" }
+  ],
+  liderazgo: [
+    { t:"prohaíresis", lee:"«gobernarte antes de gobernar»", def:"No lideras a otros si no mandas primero sobre tus propios juicios.", uso:"¿Gobernaste tu prohaíresis antes de exigirle algo a alguien?", f:"Epicteto, Disertaciones" },
+    { t:"kathêkon", lee:"«el deber del rol»", def:"Cada rol trae acciones apropiadas; liderar es cumplirlas sin aplausos.", uso:"¿Cuál era el kathêkon de tu rol hoy?", f:"Zenón/Crisipo (Diógenes Laercio, VII)" }
+  ],
+  deseo: [
+    { t:"órexis / ékklisis", lee:"«deseo / aversión»", def:"Las dos fuerzas que Epicteto manda disciplinar antes que nada.", uso:"¿Qué deseaste o rechazaste, y dependía de ti?", f:"Epicteto, Enquiridión 2" },
+    { t:"apátheia", lee:"«no es apatía: libertad de las pasiones»", def:"No es dejar de sentir; es no ser esclavo de las pasiones que te arrastran.", uso:"¿Dónde buscaste apátheia y dónde te dominó el deseo?", f:"estoicismo" },
+    { t:"eupátheiai", lee:"«buenas pasiones»", def:"Alegría, voluntad y precaución: los afectos sanos del sabio.", uso:"¿Sentiste una eupátheia en vez de un deseo ciego?", f:"estoicismo (Diógenes Laercio, VII)" }
+  ],
+  rabia: [
+    { t:"phantasía", lee:"«impresión»", def:"La rabia nace del juicio que le pones a la impresión, no de la cosa en sí.", uso:"Describe la phantasía y el juicio que encendió tu rabia.", f:"estoicismo (Epicteto)" },
+    { t:"De Ira", lee:"«Sobre la ira»", def:"Séneca: la ira es una locura breve; se frena en su primer instante.", uso:"¿Detuviste la ira en su primer chispazo o la alimentaste?", f:"Séneca, De Ira" }
+  ]
+};
+
+function terminosDe(l){
+  const out = [], seen = new Set();
+  (l.temas||[]).forEach(tema=>{
+    (TERMINOS[tema]||[]).forEach(x=>{ if(!seen.has(x.t)){ seen.add(x.t); out.push(x); } });
+  });
+  return out.slice(0,4);
+}
+
 function marcarLeida(dia){
   if(estado.leidas.includes(dia)){ toast("Ya estaba marcada como leída."); return; }
   estado.leidas.push(dia);
   estado.xp += XP_LECTURA;
+  const h = hoyStr();
+  estado.xpByDate[h] = (estado.xpByDate[h]||0) + XP_LECTURA;
+  estado.rewards.readLessons[dia] = true;
+  estado.rewards.readDates[h] = true;
   actualizarRacha();
+  toast("Lectura completada · +"+XP_LECTURA+" XP");
+  if(estado.nocheProfunda){ premiar("deepNight", h, XP_DEEP, "Lectura en Noche profunda"); }
   // sugerir siguiente día no leído
   const sig = LECCIONES.find(l=>!estado.leidas.includes(l.dia));
   estado.diaActual = sig ? sig.dia : dia;
   guardar();
-  toast("Lectura completada · +"+XP_LECTURA+" XP");
+  chequearNocheCompleta();
   renderHoy(); renderCamino(); renderSello();
 }
 
@@ -2421,6 +2611,13 @@ function renderHoy(){
   const l = leccionActual();
   const leida = estado.leidas.includes(l.dia);
   const fr = l.frase;
+  const h = hoyStr();
+  const pq = preguntaPersonal(l);
+  const pAns = (estado.personales[h] && estado.personales[h].respuesta) || "";
+  const pDone = !!estado.rewards.personalQ[h];
+  const dv = desafioVirtud(l);
+  const dvDone = !!estado.rewards.virtue[h];
+  const practHecha = !!estado.rewards.practiceLessons[l.dia];
   const charlas = l.charlas.map(c=>`
     <div class="charla">
       <div class="nivel">${esc(c.nivel)}</div>
@@ -2429,6 +2626,20 @@ function renderHoy(){
       <div class="row"><b>Contraargumento</b> ${esc(c.contra)}</div>
       <div class="row"><b>Pregunta final</b> ${esc(c.pregunta)}</div>
     </div>`).join("");
+
+  const terms = terminosDe(l);
+  const termsHtml = terms.length ? `
+    <div class="section terms">
+      <h3>Términos para tu respuesta</h3>
+      <p class="terms-intro">Vocabulario estoico real del tema de hoy. Úsalo para pensar y escribir, aunque no supieras por dónde empezar.</p>
+      ${terms.map(x=>`
+        <div class="term">
+          <div class="t-head"><span class="t-word">${esc(x.t)}</span> <span class="t-lee">${esc(x.lee)}</span></div>
+          <div class="t-def">${esc(x.def)}</div>
+          <div class="t-uso"><b>Úsalo así:</b> ${esc(x.uso)}</div>
+          <div class="t-src">${esc(x.f)}</div>
+        </div>`).join("")}
+    </div>` : "";
 
   $("#view-hoy").innerHTML = `
   <div class="lesson-wrap"><article class="lesson">
@@ -2445,7 +2656,9 @@ function renderHoy(){
     <div class="section"><h3>Aplicación práctica</h3><p>${esc(l.aplicacion)}</p></div>
     <div class="section deep-hide"><h3>Contraste</h3><p>${esc(l.contraste)}</p></div>
 
-    <div class="practice"><h3>Práctica nocturna · 3 min</h3><p>${esc(l.practica)}</p></div>
+    <div class="practice"><h3>Práctica nocturna · 3 min</h3><p>${esc(l.practica)}</p>
+      <button class="btn btn-ghost mini ${practHecha?"done":""}" id="btn-practica" ${practHecha?"disabled":""}>${practHecha?"✓ Práctica realizada":"Realicé la práctica"}</button>
+    </div>
 
     <div class="uncomfortable"><h3>Pregunta incómoda de la noche</h3><p>${esc(l.preguntaIncomoda)}</p></div>
 
@@ -2460,6 +2673,24 @@ function renderHoy(){
     <div class="section deep-hide"><h3>Idea para conversar</h3><p>${esc(l.conversar)}</p></div>
     <div class="deep-hide">${charlas}</div>
 
+    ${termsHtml}
+
+    <div class="section personal">
+      <h3>Pregunta personal de esta noche</h3>
+      <p class="lead-min">${esc(pq)}</p>
+      <textarea id="ta-personal" placeholder="Responde con honestidad (mín. 20 caracteres para +5 XP)…">${esc(pAns)}</textarea>
+      <div class="row-mini">
+        <button class="btn btn-ghost mini" id="btn-personal">${pDone?"Actualizar respuesta":"Guardar respuesta"}</button>
+        <span class="mini-note" id="personal-note">${pDone?"Respondida hoy ✓":""}</span>
+      </div>
+    </div>
+
+    <div class="challenge">
+      <h3>Desafío de virtud de esta noche</h3>
+      <p>${esc(dv)}</p>
+      <button class="btn btn-ghost mini ${dvDone?"done":""}" id="btn-desafio" ${dvDone?"disabled":""}>${dvDone?"✓ Desafío realizado":"Desafío realizado"}</button>
+    </div>
+
     <div class="actions">
       <button class="btn btn-primary ${leida?"done":""}" id="btn-leido">${leida?"✓ Leída":"Marcar como leído"}</button>
       <button class="btn btn-ghost" id="btn-random2">Lección al azar</button>
@@ -2468,6 +2699,32 @@ function renderHoy(){
 
   $("#btn-leido").onclick = ()=> marcarLeida(l.dia);
   $("#btn-random2").onclick = leccionAzar;
+
+  const bp = $("#btn-practica");
+  if(bp) bp.onclick = ()=>{
+    if(premiar("practiceLessons", l.dia, XP_MINI, "Práctica realizada")){
+      estado.rewards.practiceDates[hoyStr()] = true; guardar();
+      chequearNocheCompleta(); renderHoy();
+    }
+  };
+  $("#btn-personal").onclick = ()=>{
+    const val = ($("#ta-personal").value||"").trim();
+    const hh = hoyStr();
+    estado.personales[hh] = { dia:l.dia, titulo:l.titulo, pregunta:pq, respuesta:val };
+    guardar();
+    if(val.length>=20){
+      const nuevo = premiar("personalQ", hh, XP_MINI, "Reflexión personal");
+      $("#personal-note").textContent = nuevo ? "Respondida hoy ✓ (+5 XP)" : "Actualizada ✓";
+      chequearNocheCompleta();
+    } else {
+      $("#personal-note").textContent = "Guardada (mín. 20 caracteres para +5 XP).";
+    }
+    renderSello();
+  };
+  const bd = $("#btn-desafio");
+  if(bd) bd.onclick = ()=>{
+    if(premiar("virtue", hoyStr(), XP_MINI, "Desafío de virtud")){ renderHoy(); }
+  };
 }
 
 /* ---- CAMINO (rutas + filtro temas + path) ---- */
@@ -2549,9 +2806,25 @@ function renderDiario(){
       <textarea id="${q.id}" data-q="${q.id}" placeholder="Escribe sin juzgarte…">${esc(hoy[q.id]||"")}</textarea>
     </div>`).join("");
 
+  const L = leccionActual();
+  const tema = `
+    <div style="border-top:1px solid #2c2418;margin-top:14px;padding-top:12px;">
+      <div class="subhead">Sobre la lección de esta noche</div>
+      <p style="color:#C8A24B;font-family:Georgia,serif;font-style:italic;margin:.1em 0 .7em;">«${esc(L.titulo)}»</p>
+      <div class="journal-q">
+        <label for="tema-conversar">${esc(L.conversar)}</label>
+        <textarea id="tema-conversar" data-q="tema-conversar" placeholder="Piensa en voz alta sobre el tema de hoy…">${esc(hoy["tema-conversar"]||"")}</textarea>
+      </div>
+      <div class="journal-q">
+        <label for="tema-incomoda">${esc(L.preguntaIncomoda)}</label>
+        <textarea id="tema-incomoda" data-q="tema-incomoda" placeholder="La pregunta incómoda: sé honesto contigo…">${esc(hoy["tema-incomoda"]||"")}</textarea>
+      </div>
+    </div>`;
+
   $("#view-diario").innerHTML = `
     <div class="route-head"><h2>Diario filosófico</h2><p>${esc(h)} · se guarda solo en este dispositivo.</p></div>
     ${campos}
+    ${tema}
     <div class="saved-note" id="diario-note"></div>
     <div class="actions">
       <button class="btn btn-primary" id="btn-guardar-diario">Guardar la noche</button>
@@ -2577,26 +2850,53 @@ function guardarDiario(){
   });
   const eraNueva = !estado.diario[h];
   if(algo){
+    const L = leccionActual();
+    entrada.__tema = { dia:L.dia, titulo:L.titulo, qConversar:L.conversar, qIncomoda:L.preguntaIncomoda };
     estado.diario[h] = entrada;
-    if(eraNueva){ estado.xp += XP_DIARIO; }
+    if(eraNueva){
+      estado.xp += XP_DIARIO;
+      estado.xpByDate[h] = (estado.xpByDate[h]||0) + XP_DIARIO;
+      estado.rewards.diaryDates[h] = true;
+    }
+    if((entrada["tema-conversar"]||"").length >= 20) premiar("reflectionQ", h, XP_MINI, "Reflexión del día");
+    if((entrada["tema-incomoda"]||"").length >= 20) premiar("uncomfortableQ", h, XP_MINI, "Pregunta incómoda respondida");
+    guardar();
+    chequearNocheCompleta();
   } else {
     delete estado.diario[h];
+    delete estado.rewards.diaryDates[h];
+    guardar();
   }
-  guardar();
   $("#diario-note").textContent = algo ? "Guardado ✓" : "Entrada vacía: nada que guardar.";
   renderSello();
 }
 
 function exportarDiario(){
-  const fechas = Object.keys(estado.diario).sort();
+  const fechas = [...new Set([...Object.keys(estado.diario), ...Object.keys(estado.personales)])].sort();
   if(!fechas.length){ toast("Aún no hay entradas que exportar."); return; }
   let md = "# Diario — Stoa Nocturna\n\n";
   fechas.forEach(f=>{
     md += `## ${f}\n\n`;
-    DIARIO_Q.forEach(q=>{
-      const a = estado.diario[f][q.id];
-      if(a){ md += `**${q.txt}**\n\n${a}\n\n`; }
-    });
+    const e = estado.diario[f];
+    if(e){
+      DIARIO_Q.forEach(q=>{
+        const a = e[q.id];
+        if(a){ md += `**${q.txt}**\n\n${a}\n\n`; }
+      });
+      const t = e.__tema;
+      if(t){
+        md += `**Sobre la lección: «${t.titulo}»**\n\n`;
+        if(e["tema-conversar"]){ md += `*${t.qConversar}*\n\n${e["tema-conversar"]}\n\n`; }
+        if(e["tema-incomoda"]){ md += `*${t.qIncomoda}*\n\n${e["tema-incomoda"]}\n\n`; }
+      }
+    }
+    const p = estado.personales[f];
+    if(p && p.respuesta){ md += `**Pregunta personal — «${p.titulo}»**\n\n*${p.pregunta}*\n\n${p.respuesta}\n\n`; }
+    const marcas = [];
+    if(estado.rewards.practiceDates[f]) marcas.push("Práctica realizada");
+    if(estado.rewards.virtue[f])       marcas.push("Desafío de virtud realizado");
+    if(marcas.length) md += `_${marcas.join(" · ")}_\n\n`;
+    if(estado.xpByDate[f]) md += `_XP del día: ${estado.xpByDate[f]}_\n\n`;
     md += "---\n\n";
   });
   const blob = new Blob([md], {type:"text/markdown;charset=utf-8"});
@@ -2609,7 +2909,7 @@ function exportarDiario(){
 }
 
 function exportarLibro(){
-  const fechas = Object.keys(estado.diario).sort();
+  const fechas = [...new Set([...Object.keys(estado.diario), ...Object.keys(estado.personales)])].sort();
   if(!fechas.length){ toast("Aún no hay entradas que exportar."); return; }
   const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   function fechaLarga(f){
@@ -2619,17 +2919,19 @@ function exportarLibro(){
   }
   let md = "# Entre Sueños y Delirios\n";
   md += "### Material de diario — recogido en Stoa Nocturna\n\n";
-  md += "_Reflexiones nocturnas, en bruto, para integrar al libro. " + fechas.length + " noche(s) registrada(s)._\n\n";
+  md += "_Reflexiones nocturnas, en bruto, para integrar al libro._\n\n";
   md += "* * *\n\n";
   let n = 0;
   fechas.forEach(f=>{
     const e = estado.diario[f] || {};
     const partes = DIARIO_Q.map(q=> (e[q.id]||"").trim()).filter(Boolean);
+    ["tema-conversar","tema-incomoda"].forEach(k=>{ const v=(e[k]||"").trim(); if(v) partes.push(v); });
+    const p = estado.personales[f];
+    if(p && (p.respuesta||"").trim()) partes.push(p.respuesta.trim());
     if(!partes.length) return;
     n++;
     md += `## ${fechaLarga(f)}\n\n`;
-    // Las respuestas se entregan como prosa corrida, sin el enunciado de la pregunta,
-    // para que sirvan de material narrativo directo.
+    // Prosa corrida, sin enunciados: sólo lo que el usuario escribió. Nada inventado.
     md += partes.join("\n\n") + "\n\n";
     md += "* * *\n\n";
   });
@@ -2649,12 +2951,21 @@ function renderSello(){
   const sig = rangoSiguiente();
   const pct = sig ? Math.min(100, Math.round((estado.xp - r.xp)/(sig.xp - r.xp)*100)) : 100;
 
+  const cols  = Math.floor(estado.leidas.length/5);
+  const pergs = Math.floor(nDiario()/3);
+  const olivos= Math.floor(nPersonales()/5);
+  const rc = estado.rachaActual;
+  const fuego = rc>=7 ? "🔥 fuego firme" : rc>=3 ? "🔥 llama estable" : rc>=1 ? "🔥 llama pequeña" : "· brasas apagadas";
+  const piedra = leidasConTema("control")>=3;
+
   const badges = INSIGNIAS.map(b=>{
     const got = b.test(estado);
+    let sub = esc(b.desc);
+    if(!got && b.prog){ const p=b.prog(estado); sub = `${esc(b.desc)} · ${Math.min(p[0],p[1])}/${p[1]}`; }
     return `<div class="badge ${got?"earned":""}">
       <div class="b-ico">${b.ico}</div>
       <div class="b-name">${esc(b.nombre)}</div>
-      <div class="b-desc">${esc(b.desc)}</div>
+      <div class="b-desc">${sub}</div>
     </div>`;
   }).join("");
 
@@ -2676,6 +2987,15 @@ function renderSello(){
       <div class="stat"><div class="n">${estado.leidas.length}</div><div class="l">Lecturas</div></div>
       <div class="stat"><div class="n">${estado.rachaActual}</div><div class="l">Racha</div></div>
       <div class="stat"><div class="n">${Object.keys(estado.diario).length}</div><div class="l">Noches escritas</div></div>
+    </div>
+
+    <div class="subhead">Mi Stoa</div>
+    <div class="mistoa">
+      <div class="ms-row"><span class="ms-l">Columnas</span><span class="ms-i">${cols?"🏛".repeat(cols):"—"}</span><span class="ms-c">${estado.leidas.length} lecturas</span></div>
+      <div class="ms-row"><span class="ms-l">Pergaminos</span><span class="ms-i">${pergs?"📜".repeat(pergs):"—"}</span><span class="ms-c">${nDiario()} noches</span></div>
+      <div class="ms-row"><span class="ms-l">Fuego interior</span><span class="ms-i">${fuego}</span><span class="ms-c">racha ${estado.rachaActual}</span></div>
+      <div class="ms-row"><span class="ms-l">Olivos</span><span class="ms-i">${olivos?"🌿".repeat(olivos):"—"}</span><span class="ms-c">${nPersonales()} reflexiones</span></div>
+      <div class="ms-row"><span class="ms-l">Piedra del control</span><span class="ms-i">${piedra?"🪨":"—"}</span><span class="ms-c">${piedra?"lograda":leidasConTema("control")+"/3 control"}</span></div>
     </div>
 
     <div class="subhead">Insignias</div>
